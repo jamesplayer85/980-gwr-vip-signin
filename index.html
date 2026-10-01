@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b4f68">
+  <meta name="robots" content="noindex, nofollow">
+  <title>VIP & Cast Sign-In — 980 Great West Road</title>
+  <style>
+    :root{--accent:#18794e;--blue:#0b4f68;--ink:#14232b;--muted:#60727c;--line:#d7e1e5;--soft:#eef4f6;--paper:#fff;--danger:#b42318;--warning:#8a5a00;--shadow:0 24px 70px rgba(7,56,74,.16);--r:20px}
+    *{box-sizing:border-box} html{min-height:100%;background:#eaf1f3} body{margin:0;min-height:100vh;color:var(--ink);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#f9fbfc,#eaf1f3)}
+    button,input{font:inherit} button{cursor:pointer} .hidden{display:none!important}
+    .page{width:min(100% - 28px,720px);margin:28px auto 52px}
+    .shell{overflow:hidden;border:1px solid rgba(11,79,104,.11);border-radius:var(--r);background:var(--paper);box-shadow:var(--shadow)}
+    .hero{padding:26px 28px;color:#fff;background:var(--accent)}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.14);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+    .hero h1{margin:12px 0 4px;font-size:clamp(24px,5vw,32px);line-height:1.05;letter-spacing:-.03em}
+    .hero p{margin:0;color:rgba(255,255,255,.88);font-size:14px;line-height:1.5}
+    .roster-pill{display:inline-flex;margin-top:14px;padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.16);font-size:13px;font-weight:750}
+    .content{padding:26px 24px 32px}
+    .card{border:1.5px solid var(--line);border-radius:16px;padding:20px;margin-bottom:20px}
+    .card h2{margin:0 0 4px;font-size:18px;letter-spacing:-.01em}
+    .card p.desc{margin:0 0 16px;color:var(--muted);font-size:13px;line-height:1.5}
+    label{display:block;margin:0 0 7px;font-size:13px;font-weight:780;color:#29404b}
+    .req{color:var(--danger)}
+    input[type=text]{width:100%;min-height:48px;border:1.5px solid #cfdadd;border-radius:12px;padding:11px 14px;color:var(--ink);background:#fff;font-size:16px;outline:none;transition:.18s}
+    input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(24,121,78,.1)}
+    .field{margin-bottom:16px}
+    .hint{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.45}
+    .option-list{display:grid;gap:10px}
+    .option{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+    .option:has(input:checked){border-color:var(--accent);background:#f3faf6}
+    .option input{margin-top:3px}
+    .option strong{display:block;font-size:14px}
+    .option span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+    .btn{border:0;border-radius:12px;min-height:50px;padding:12px 20px;font-weight:820;transition:.15s;width:100%}
+    .btn:hover:not(:disabled){transform:translateY(-1px)}
+    .btn:disabled{opacity:.52;cursor:not-allowed}
+    .btn.primary{color:#fff;background:var(--accent);box-shadow:0 8px 20px rgba(24,121,78,.2)}
+    .status{display:none;margin-top:14px;padding:12px 14px;border-radius:11px;font-size:13px;line-height:1.45}
+    .status.show{display:block}
+    .status.error{color:var(--danger);background:#fff0ee;border:1px solid #ffd2cc}
+    .status.success{color:var(--accent);background:#e9f7ef;border:1px solid #bce5cd}
+    .calendar{border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:16px}
+    .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .cal-head h3{margin:0;font-size:14px;font-weight:800}
+    .cal-nav{border:1.5px solid var(--line);background:#fff;border-radius:8px;width:30px;height:30px;font-size:16px;line-height:1}
+    .cal-nav:disabled{opacity:.35;cursor:not-allowed}
+    .week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;text-align:center}
+    .days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+    .day{aspect-ratio:1;border:0;border-radius:9px;background:#f5f8f9;color:var(--ink);font-size:13px;font-weight:700}
+    .day.other{color:#c3ced2;background:transparent}
+    .day:disabled{color:#d4dadc;background:transparent;cursor:not-allowed}
+    .day.selected{background:var(--accent);color:#fff}
+    .day.today:not(.selected){box-shadow:inset 0 0 0 1.5px var(--accent)}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:var(--soft);font-size:12px;font-weight:700;color:#28506b}
+    .chip button{border:0;background:transparent;color:#28506b;font-weight:900;padding:0;line-height:1}
+    .passes-table{width:100%;border-collapse:collapse;font-size:13px}
+    .passes-table th{text-align:left;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:1px solid var(--line)}
+    .passes-table td{padding:10px;border-bottom:1px solid #eef2f3;vertical-align:middle}
+    .badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+    .badge-green{background:#e9f7ef;color:var(--accent)}
+    .badge-grey{background:#f1f3f4;color:#5c6b6f}
+    .dl-btn{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;white-space:nowrap}
+    .empty{color:var(--muted);font-size:13px;padding:10px 2px}
+    .center-msg{padding:60px 24px;text-align:center;color:var(--muted)}
+    .center-msg h2{color:var(--ink);margin:0 0 8px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="shell">
+      <div id="loadingState" class="content"><p class="empty">Loading…</p></div>
+
+      <div id="invalidState" class="content hidden">
+        <div class="center-msg">
+          <h2>This link isn't valid</h2>
+          <p id="invalidMessage">Please check the URL, or contact the office for a new link.</p>
+        </div>
+      </div>
+
+      <div id="mainState" class="hidden">
+        <div class="hero">
+          <div class="eyebrow"><span>VIP &amp; Cast Sign-In</span></div>
+          <h1 id="productionName">—</h1>
+          <p>980 Great West Road, Brentford — generate entry passes for VIPs and cast who won't be registering themselves.</p>
+          <div class="roster-pill" id="rosterPill">—</div>
+        </div>
+        <div class="content">
+
+          <div class="card">
+            <h2>Add a VIP</h2>
+            <p class="desc">Enter their name and the date(s) they need access. Passes don't need a Health &amp; Safety sign-off here — that's confirmed in person on arrival.</p>
+            <form id="vipForm">
+              <div class="field">
+                <label for="vipName">Full name <span class="req">*</span></label>
+                <input id="vipName" type="text" list="vipNameSuggestions" placeholder="e.g. Jamie Lee" autocomplete="off">
+                <datalist id="vipNameSuggestions"></datalist>
+                <div class="hint">If this name matches someone already on the roster, new dates are added to their existing entry — it won't use up another of the 15 slots.</div>
+              </div>
+
+              <div class="field">
+                <label>Access date(s) <span class="req">*</span></label>
+                <div class="calendar">
+                  <div class="cal-head">
+                    <button type="button" class="cal-nav" id="prevMonth" aria-label="Previous month">‹</button>
+                    <h3 id="monthTitle"></h3>
+                    <button type="button" class="cal-nav" id="nextMonth" aria-label="Next month">›</button>
+                  </div>
+                  <div class="week"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
+                  <div id="calendarDays" class="days"></div>
+                </div>
+                <div id="selectedDatesChips" class="chips"><span class="empty">No dates selected yet.</span></div>
+              </div>
+
+              <div class="field">
+                <label>Vehicle</label>
+                <div class="option-list">
+                  <div class="option"><input id="vehicleNo" type="radio" name="vipVehicle" value="no" checked><label for="vehicleNo" style="margin:0"><strong>No vehicle</strong><span>Arriving on foot or as a passenger.</span></label></div>
+                  <div class="option"><input id="vehicleYes" type="radio" name="vipVehicle" value="yes"><label for="vehicleYes" style="margin:0"><strong>Arriving in a vehicle</strong><span>Enter the registration below.</span></label></div>
+                </div>
+              </div>
+
+              <div id="vehicleRegWrap" class="field hidden">
+                <label for="vipVehicleReg">Vehicle registration <span class="req">*</span></label>
+                <input id="vipVehicleReg" type="text" maxlength="20" style="text-transform:uppercase">
+              </div>
+
+              <div id="parkingTypeWrap" class="field hidden">
+                <label>Parking <span class="req">*</span></label>
+                <div class="option-list">
+                  <div class="option"><input id="parkingOnsite" type="radio" name="vipParking" value="onsite"><label for="parkingOnsite" style="margin:0"><strong>Parking on site</strong><span>Vehicle will stay on site for the day.</span></label></div>
+                  <div class="option"><input id="parkingDropoff" type="radio" name="vipParking" value="dropoff"><label for="parkingDropoff" style="margin:0"><strong>Dropping off / collecting only</strong><span>Vehicle will not stay on site.</span></label></div>
+                </div>
+              </div>
+
+              <button id="submitVip" class="btn primary" type="submit">Generate pass(es)</button>
+              <div id="vipFormStatus" class="status"></div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>Passes issued</h2>
+            <p class="desc">Download a pass as an image to send however suits — WhatsApp, email, AirDrop, or print it.</p>
+            <div id="passesContent"><p class="empty">No passes created yet.</p></div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="gatehouseState" class="hidden">
+        <div class="hero">
+          <div class="eyebrow"><span>Gatehouse Sign-In</span></div>
+          <h1 id="ghProductionName">—</h1>
+          <p>Health &amp; Safety declaration — captured in person on arrival.</p>
+        </div>
+        <div class="content">
+
+          <div id="ghRosterView">
+            <div class="card">
+              <h2>Who's signing in?</h2>
+              <p class="desc">Select the VIP who has just arrived to capture their Health &amp; Safety signature.</p>
+              <div id="ghRosterList"><p class="empty">No VIPs on the roster yet.</p></div>
+            </div>
+          </div>
+
+          <div id="ghSignView" class="hidden">
+            <div class="card">
+              <h2 id="ghSignName">—</h2>
+              <p class="desc">Read the information below, scroll to the bottom to unlock the checkbox, then sign.</p>
+              <div style="border:1.5px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden;">
+                <div id="ghSafetyDoc" style="height:260px;overflow-y:auto;background:#f8fbfc;padding:14px 16px;font-size:12px;line-height:1.7;color:#29404b;"></div>
+              </div>
+              <div class="option" style="margin-bottom:16px;cursor:default;">
+                <input id="ghSafetyAccepted" type="checkbox" disabled style="opacity:.4;margin-top:3px;">
+                <label for="ghSafetyAccepted" id="ghSafetyAcceptedLabel" style="margin:0;opacity:.5;font-weight:600;font-size:13px;">Scroll to the bottom to unlock — I confirm I have read, understood and agree to comply with the Mandatory Health, Safety &amp; Site Information.</label>
+              </div>
+
+              <div class="field">
+                <label for="ghTypedName">Typed signature (full name) <span class="req">*</span></label>
+                <input id="ghTypedName" type="text" placeholder="Type full name">
+              </div>
+
+              <div class="field">
+                <label>Signature <span class="req">*</span></label>
+                <div style="border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;">
+                  <canvas id="ghSigCanvas" style="width:100%;height:180px;display:block;touch-action:none;"></canvas>
+                </div>
+                <button type="button" id="ghClearSig" class="btn" style="margin-top:8px;background:var(--soft);color:var(--ink);min-height:40px;">Clear signature</button>
+              </div>
+
+              <div style="display:flex;gap:10px;margin-top:10px;">
+                <button type="button" id="ghCancelSign" class="btn" style="background:var(--soft);color:var(--ink);">Back</button>
+                <button type="button" id="ghSubmitSign" class="btn primary">Confirm signature</button>
+              </div>
+              <div id="ghSignStatus" class="status"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden iframe used to render a pass's HTML before turning it into a PNG -->
+  <iframe id="passRenderFrame" style="position:fixed;left:-9999px;top:0;width:480px;height:720px;border:0;"></iframe>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+const WORKER_URL = 'https://basecamp-gwr.bt7frcbfh2.workers.dev';
+const $  = id => document.getElementById(id);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+const state = {
+  token: '',
+  gatehouseToken: '',
+  production: null,
+  roster: [],
+  passes: [],
+  ghRoster: [],
+  ghSigningVipId: '',
+  selectedDates: new Set(),
+  calendarMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+};
+
+var SAFETY_DOC_LINES = [
+    '<strong>MANDATORY HEALTH, SAFETY &amp; SITE INFORMATION</strong>',
+    '<strong>980 Great West Road, Brentford, TW8 9GS</strong>',
+    '',
+    '<strong>Welcome</strong>',
+    'Welcome to site. This induction is mandatory for all operatives, contractors, visitors, and personnel working on or visiting the premises.',
+    'The purpose of this induction is to ensure that everyone on site understands the required health, safety, emergency, and operational procedures to maintain a safe working environment.',
+    'All personnel are expected to comply with the instructions contained within this document at all times.',
+    '',
+    '<strong>Primary Site Contacts</strong>',
+    '24-Hour Security: 07927 531871 / 0208 568 0074',
+    'Kenneth Bath: 07725 598279 | Ken.bath@hadleypropertygroup.com',
+    '',
+    '<strong>Site Boundaries &amp; Restricted Areas</strong>',
+    'Site boundaries are clearly identified with fencing, barriers, and warning signage. Access beyond designated boundaries is strictly prohibited unless authorised.',
+    'Certain areas may be designated as restricted due to hazardous activities, high voltage equipment, stored materials, or other risks. Access is permitted only with prior authorisation.',
+    'Always observe warning signs and follow site instructions as Blocks B, C &amp; D have been stripped and returned to Shell and Core.',
+    '',
+    '<strong>Site Access Requirements</strong>',
+    'All operatives and visitors must report to the Security Main Gate House upon arrival.',
+    'Use designated pedestrian walkways at all times. Follow all instructions provided by site security and management.',
+    'Only authorised vehicles are permitted on site. Site speed limit is 10mph. Drivers must remain alert to pedestrians, plant, and ongoing works.',
+    '',
+    '<strong>Site Safety Rules</strong>',
+    'Do not enter any area marked "No Entry" or protected by barriers.',
+    'If unsure whether access is permitted, consult the Site Operations Manager before proceeding.',
+    'Do not alter, damage, or interfere with the building fabric or site infrastructure without authorisation.',
+    'Take extra care in areas with uneven floor surfaces particularly Blocks B, C &amp; D.',
+    'Smoking and vaping are prohibited inside the building.',
+    'Do not drink tap water unless specifically confirmed as potable.',
+    'No lone working.',
+    'No Power or Fire alarm detection or Water in blocks B, C D.',
+    '',
+    '<strong>Fire &amp; Emergency Evacuation Procedures</strong>',
+    'If you discover a fire: 1. Raise the alarm immediately. 2. Evacuate the building using the nearest available fire exit. 3. Notify the 24-Hour Security or Site Operations Manager.',
+    'All personnel must proceed immediately to the designated assembly point 5 upon alarm activation.',
+    'Do not delay evacuation to collect personal belongings, tools, or equipment.',
+    'Do not use passenger lifts during an evacuation.',
+    'Remain at assembly point 5 until instructed otherwise by the Site Operations Manager.',
+    'Do not re-enter the building until permission has been given.',
+    '',
+    '<strong>What Is Expected of You</strong>',
+    'Health and Safety is everyone\'s responsibility.',
+    'Do not interfere with or misuse any safety equipment or systems.',
+    'Work in accordance with approved Risk Assessments and Method Statements (RAMS).',
+    'Wear all required Personal Protective Equipment (PPE).',
+    'Report any unsafe condition immediately.',
+    'Alcohol and illegal substances are strictly prohibited on site.',
+    'Report all accidents, incidents, hazards, and near misses to the Site Operations Manager immediately.',
+    '',
+    '<strong>Key Health &amp; Safety Legislation</strong>',
+    'The following legislation applies to activities carried out on site:',
+    '• Health &amp; Safety at Work Act',
+    '• Construction (Design and Management) Regulations',
+    '• Lifting Operations and Lifting Equipment Regulations (LOLER)',
+    '• Work at Height Regulations',
+    '• Provision and Use of Work Equipment Regulations (PUWER)',
+    '• Control of Substances Hazardous to Health Regulations (COSHH)',
+    '• Reporting of Injuries, Diseases and Dangerous Occurrences Regulations (RIDDOR)',
+    '• Management of Health &amp; Safety at Work Regulations',
+    '',
+    '<strong>Induction Confirmation</strong>',
+    'By ticking the checkbox below you confirm that you have read, understood, and agree to comply with the contents of this Site Induction.',
+    'Failure to comply with site rules or safety requirements may result in removal from site.',
+  ];
+
+function todayKey(){ return dateKey(new Date()); }
+function dateKey(d){ return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-'); }
+function longDate(k){ const p = k.split('-').map(Number); return new Intl.DateTimeFormat('en-GB',{weekday:'short', day:'numeric', month:'short', year:'numeric'}).format(new Date(p[0],p[1]-1,p[2],12)); }
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function setStatus(id, type, msg){ const el=$(id); el.className='status'+(type?(' show '+type):''); el.textContent=msg||''; }
+
+async function server(method, ...args){
+  const res = await fetch(WORKER_URL + '/vip-api', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ method, args })
+  });
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok || data.error) throw new Error(data.error || 'Something went wrong.');
+  return data;
+}
+
+// ── Calendar (simple click-to-toggle, no range mode needed here) ──────────
+function renderCalendar(){
+  const base = state.calendarMonth;
+  $('monthTitle').textContent = new Intl.DateTimeFormat('en-GB',{month:'long', year:'numeric'}).format(base);
+  const first = new Date(base.getFullYear(), base.getMonth(), 1);
+  const startOffset = (first.getDay()+6) % 7;
+  const start = new Date(base.getFullYear(), base.getMonth(), 1 - startOffset);
+  let html = '';
+  for (let i=0;i<42;i++){
+    const d = new Date(start); d.setDate(start.getDate()+i);
+    const k = dateKey(d);
+    const other = d.getMonth() !== base.getMonth();
+    const past = k < todayKey();
+    const sel = state.selectedDates.has(k);
+    const tod = k === todayKey();
+    html += `<button type="button" class="day${other?' other':''}${sel?' selected':''}${tod?' today':''}" data-date="${k}" ${past?'disabled':''}>${d.getDate()}</button>`;
+  }
+  $('calendarDays').innerHTML = html;
+  $$('.day[data-date]').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.date;
+    state.selectedDates.has(k) ? state.selectedDates.delete(k) : state.selectedDates.add(k);
+    renderCalendar(); renderSelectedChips();
+  }));
+  const current = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  $('prevMonth').disabled = base <= current;
+}
+function renderSelectedChips(){
+  const dates = [...state.selectedDates].sort();
+  const box = $('selectedDatesChips');
+  box.innerHTML = dates.length
+    ? dates.map(k => `<span class="chip">${escHtml(longDate(k))}<button type="button" data-remove="${k}" aria-label="Remove date">×</button></span>`).join('')
+    : '<span class="empty">No dates selected yet.</span>';
+  $$('[data-remove]').forEach(b => b.onclick = () => { state.selectedDates.delete(b.dataset.remove); renderCalendar(); renderSelectedChips(); });
+}
+$('prevMonth').onclick = () => { state.calendarMonth = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth()-1, 1); renderCalendar(); };
+$('nextMonth').onclick = () => { state.calendarMonth = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth()+1, 1); renderCalendar(); };
+
+// ── Vehicle / parking toggles ──────────────────────────────────────────────
+$$('input[name=vipVehicle]').forEach(r => r.onchange = () => {
+  const isVehicle = $('vehicleYes').checked;
+  $('vehicleRegWrap').classList.toggle('hidden', !isVehicle);
+  $('parkingTypeWrap').classList.toggle('hidden', !isVehicle);
+  if (!isVehicle) { $('vipVehicleReg').value=''; $$('input[name=vipParking]').forEach(p=>p.checked=false); }
+});
+
+// ── Dashboard load / render ────────────────────────────────────────────────
+async function loadDashboard(){
+  try {
+    const r = await server('vipGetDashboard', state.token);
+    state.production = r.production;
+    state.roster = r.roster;
+    state.passes = r.passes;
+    document.documentElement.style.setProperty('--accent', r.production.colour || '#18794e');
+    $('productionName').textContent = r.production.name;
+    $('rosterPill').textContent = `${r.roster.length} of ${r.rosterCap} VIP slots used`;
+    $('vipNameSuggestions').innerHTML = r.roster.map(p => `<option value="${escHtml(p.fullName)}">`).join('');
+    renderPasses();
+    $('loadingState').classList.add('hidden');
+    $('invalidState').classList.add('hidden');
+    $('mainState').classList.remove('hidden');
+  } catch(e) {
+    $('invalidMessage').textContent = e.message;
+    $('loadingState').classList.add('hidden');
+    $('mainState').classList.add('hidden');
+    $('invalidState').classList.remove('hidden');
+  }
+}
+
+function renderPasses(){
+  const el = $('passesContent');
+  if (!state.passes.length){ el.innerHTML = '<p class="empty">No passes created yet.</p>'; return; }
+  const rows = state.passes.map(r => `
+    <tr>
+      <td><strong>${escHtml(r.fullName)}</strong></td>
+      <td>${escHtml(longDate(r.date))}</td>
+      <td>${r.vehicleRequired ? `<span class="badge badge-green">${escHtml(r.vehicleReg)}</span>` : '<span class="badge badge-grey">No vehicle</span>'}</td>
+      <td><button type="button" class="dl-btn" data-dl="${escHtml(r.accessId)}" data-name="${escHtml(r.fullName)}" data-date="${escHtml(r.date)}">Download PNG</button></td>
+    </tr>`).join('');
+  el.innerHTML = `<div style="overflow-x:auto"><table class="passes-table"><thead><tr><th>Name</th><th>Date</th><th>Vehicle</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  $$('[data-dl]').forEach(b => b.onclick = () => downloadPassPng(b.dataset.dl, b.dataset.name, b.dataset.date, b));
+}
+
+// ── Submit new VIP / dates ─────────────────────────────────────────────────
+$('vipForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const fullName = $('vipName').value.trim();
+  if (!fullName){ setStatus('vipFormStatus','error','Please enter the VIP\'s name.'); return; }
+  const dates = [...state.selectedDates].sort();
+  if (!dates.length){ setStatus('vipFormStatus','error','Please select at least one date.'); return; }
+  const vehicleRequired = $('vehicleYes').checked;
+  const vehicleReg = vehicleRequired ? $('vipVehicleReg').value.trim().toUpperCase() : '';
+  const parkingType = vehicleRequired ? (document.querySelector('input[name=vipParking]:checked')?.value || '') : '';
+  if (vehicleRequired && !vehicleReg){ setStatus('vipFormStatus','error','Please enter the vehicle registration.'); return; }
+  if (vehicleRequired && !parkingType){ setStatus('vipFormStatus','error','Please confirm whether they are parking on site or just dropping off.'); return; }
+
+  const btn = $('submitVip');
+  btn.disabled = true; btn.textContent = 'Generating…';
+  try {
+    const r = await server('vipCreatePasses', { token: state.token, fullName, dates, vehicleRequired, vehicleReg, parkingType });
+    state.roster = r.roster;
+    state.passes = r.passes;
+    $('rosterPill').textContent = `${r.roster.length} of 15 VIP slots used`;
+    $('vipNameSuggestions').innerHTML = r.roster.map(p => `<option value="${escHtml(p.fullName)}">`).join('');
+    renderPasses();
+    $('vipName').value = '';
+    state.selectedDates.clear();
+    renderCalendar(); renderSelectedChips();
+    $('vehicleNo').checked = true;
+    $('vehicleRegWrap').classList.add('hidden');
+    $('parkingTypeWrap').classList.add('hidden');
+    $('vipVehicleReg').value = '';
+    setStatus('vipFormStatus','success', r.message);
+  } catch(e) {
+    setStatus('vipFormStatus','error', e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Generate pass(es)';
+  }
+};
+
+// ── PNG download (render the real pass HTML, then screenshot it) ──────────
+async function downloadPassPng(accessId, fullName, date, btn){
+  const originalText = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Preparing…';
+  try {
+    const res = await fetch(WORKER_URL + '/vip-api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'vipGetPassHTML', args: [{ token: state.token, accessId }] })
+    });
+    if (!res.ok) { const d = await res.json().catch(()=>({})); throw new Error(d.error || 'Could not load the pass.'); }
+    const html = await res.text();
+
+    const frame = $('passRenderFrame');
+    await new Promise((resolve, reject) => {
+      frame.onload = resolve;
+      frame.onerror = () => reject(new Error('Could not render the pass.'));
+      frame.srcdoc = html;
+    });
+    // Give logo images a moment to finish loading inside the iframe
+    await new Promise(r => setTimeout(r, 400));
+
+    const target = frame.contentDocument.body;
+    const canvas = await html2canvas(target, { backgroundColor: '#f0f0f0', scale: 2, useCORS: true });
+    const dataUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `${fullName.replace(/[^a-z0-9]+/gi,'-')}-${date}-pass.png`;
+    a.click();
+  } catch(e) {
+    alert('Could not download this pass: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = originalText;
+  }
+}
+
+// ── Gatehouse: H&S document scroll-to-unlock ───────────────────────────────
+function initGhSafetyScroll(){
+  const doc = $('ghSafetyDoc');
+  doc.innerHTML = SAFETY_DOC_LINES.map(function(line){ return line ? '<p style="margin:0 0 6px;">'+line+'</p>' : '<br>'; }).join('');
+  doc.scrollTop = 0;
+  const cb = $('ghSafetyAccepted'), lbl = $('ghSafetyAcceptedLabel');
+  cb.checked = false; cb.disabled = true; cb.style.opacity = '.4';
+  lbl.style.opacity = '.5';
+  lbl.innerHTML = 'Scroll to the bottom to unlock — I confirm I have read, understood and agree to comply with the Mandatory Health, Safety &amp; Site Information.';
+  doc.onscroll = function(){
+    const atBottom = doc.scrollHeight - doc.scrollTop <= doc.clientHeight + 30;
+    if (atBottom && cb.disabled) {
+      cb.disabled = false; cb.style.opacity = '1'; lbl.style.opacity = '1';
+      lbl.innerHTML = lbl.innerHTML.replace('Scroll to the bottom to unlock — ', '');
+    }
+  };
+}
+
+// ── Gatehouse: signature pad (mouse + touch) ───────────────────────────────
+function setupSignatureCanvas(){
+  const canvas = $('ghSigCanvas');
+  if (canvas.dataset.wired) { canvas._clear(); return; }
+  canvas.dataset.wired = '1';
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * 2;
+  canvas.height = rect.height * 2;
+  ctx.scale(2,2);
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#14232b';
+
+  let drawing = false, last = null;
+  function pos(e){
+    const r = canvas.getBoundingClientRect();
+    const p = e.touches ? e.touches[0] : e;
+    return { x: p.clientX - r.left, y: p.clientY - r.top };
+  }
+  function start(e){ e.preventDefault(); drawing = true; last = pos(e); canvas.dataset.hasInk = '1'; }
+  function move(e){
+    if (!drawing) return;
+    e.preventDefault();
+    const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    last = p;
+  }
+  function end(){ drawing = false; }
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, { passive:false });
+  canvas.addEventListener('touchmove', move, { passive:false });
+  canvas.addEventListener('touchend', end);
+
+  canvas._clear = function(){ ctx.clearRect(0,0,canvas.width,canvas.height); canvas.dataset.hasInk=''; };
+  canvas._isEmpty = function(){ return !canvas.dataset.hasInk; };
+}
+
+// ── Gatehouse: roster + sign flow ──────────────────────────────────────────
+function renderGhRoster(){
+  const el = $('ghRosterList');
+  if (!state.ghRoster.length){ el.innerHTML = '<p class="empty">No VIPs on the roster yet.</p>'; return; }
+  el.innerHTML = state.ghRoster.map(function(r){
+    const status = r.safetySigned
+      ? 'Signed' + (r.signedDate ? ' ' + escHtml(longDate(r.signedDate)) : '')
+      : 'Not yet signed';
+    const action = r.safetySigned
+      ? '<span class="badge badge-green">Signed</span>'
+      : '<button type="button" class="dl-btn" data-sign="'+escHtml(r.vipId)+'">Sign now</button>';
+    return '<div class="option" style="cursor:default;">'
+      + '<div style="flex:1;"><strong style="display:block;font-size:14px;">'+escHtml(r.fullName)+'</strong>'
+      + '<span style="display:block;font-size:12px;color:var(--muted);margin-top:2px;">'+status+'</span></div>'
+      + action + '</div>';
+  }).join('');
+  $$('[data-sign]').forEach(function(b){ b.onclick = function(){ openSignView(b.dataset.sign); }; });
+}
+
+function openSignView(vipId){
+  const entry = state.ghRoster.find(function(r){ return r.vipId === vipId; });
+  if (!entry) return;
+  state.ghSigningVipId = vipId;
+  $('ghSignName').textContent = entry.fullName;
+  $('ghTypedName').value = '';
+  setStatus('ghSignStatus','','');
+  // Reveal the sign view FIRST — the canvas must be laid out (non-zero size)
+  // before we measure it in setupSignatureCanvas(), or it gets created at 0x0.
+  $('ghRosterView').classList.add('hidden');
+  $('ghSignView').classList.remove('hidden');
+  setupSignatureCanvas();
+  initGhSafetyScroll();
+}
+$('ghCancelSign').onclick = function(){ $('ghSignView').classList.add('hidden'); $('ghRosterView').classList.remove('hidden'); };
+$('ghClearSig').onclick = function(){ $('ghSigCanvas')._clear(); };
+
+$('ghSubmitSign').onclick = async function(){
+  if (!$('ghSafetyAccepted').checked){ setStatus('ghSignStatus','error','Please scroll through and accept the Health & Safety information.'); return; }
+  const typedName = $('ghTypedName').value.trim();
+  if (!typedName){ setStatus('ghSignStatus','error','Please type the full name.'); return; }
+  const canvas = $('ghSigCanvas');
+  if (canvas._isEmpty()){ setStatus('ghSignStatus','error','Please draw a signature.'); return; }
+  const btn = $('ghSubmitSign');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const signatureData = canvas.toDataURL('image/png');
+    const r = await server('gatehouseSubmitSignature', { token: state.gatehouseToken, vipId: state.ghSigningVipId, typedName, signatureData, signedDate: todayKey() });
+    state.ghRoster = r.roster;
+    renderGhRoster();
+    $('ghSignView').classList.add('hidden');
+    $('ghRosterView').classList.remove('hidden');
+  } catch(e) {
+    setStatus('ghSignStatus','error', e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Confirm signature';
+  }
+};
+
+async function loadGatehouse(){
+  try {
+    const r = await server('gatehouseGetRoster', state.gatehouseToken);
+    state.ghRoster = r.roster;
+    document.documentElement.style.setProperty('--accent', r.production.colour || '#18794e');
+    $('ghProductionName').textContent = r.production.name;
+    renderGhRoster();
+    $('loadingState').classList.add('hidden');
+    $('invalidState').classList.add('hidden');
+    $('gatehouseState').classList.remove('hidden');
+  } catch(e) {
+    $('invalidMessage').textContent = e.message;
+    $('loadingState').classList.add('hidden');
+    $('gatehouseState').classList.add('hidden');
+    $('invalidState').classList.remove('hidden');
+  }
+}
+
+// ── Init ────────────────────────────────────────────────────────────────
+(function init(){
+  const params = new URLSearchParams(window.location.search);
+  state.token = params.get('t') || '';
+  state.gatehouseToken = params.get('g') || '';
+
+  if (state.gatehouseToken) {
+    loadGatehouse();
+    return;
+  }
+
+  renderCalendar(); renderSelectedChips();
+  if (!state.token) {
+    $('invalidMessage').textContent = 'No access link token was found in the URL.';
+    $('loadingState').classList.add('hidden');
+    $('invalidState').classList.remove('hidden');
+    return;
+  }
+  loadDashboard();
+})();
+  </script>
+</body>
+</html>
