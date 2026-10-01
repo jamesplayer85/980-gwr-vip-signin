@@ -91,7 +91,7 @@
 
           <div class="card">
             <h2>Add a VIP</h2>
-            <p class="desc">Enter their name and the date(s) they need access. Passes don't need a Health &amp; Safety sign-off here — that's confirmed in person on arrival.</p>
+            <p class="desc">Enter their name and the date(s) they need access. You can sign their Health &amp; Safety declaration on their behalf separately, below.</p>
             <form id="vipForm">
               <div class="field">
                 <label for="vipName">Full name <span class="req">*</span></label>
@@ -140,62 +140,47 @@
             </form>
           </div>
 
+          <div id="rosterSignCard" class="card">
+            <h2>Roster &amp; Health &amp; Safety</h2>
+            <p class="desc">Sign the Health &amp; Safety declaration on each VIP's behalf — no need for them to do this themselves.</p>
+            <div id="rosterSignList"><p class="empty">No VIPs on the roster yet.</p></div>
+          </div>
+
+          <div id="signSubview" class="card hidden">
+            <h2 id="signPersonName">—</h2>
+            <p class="desc">Read the information below, scroll to the bottom to unlock the checkbox, then sign on their behalf.</p>
+            <div style="border:1.5px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden;">
+              <div id="safetyDoc" style="height:260px;overflow-y:auto;background:#f8fbfc;padding:14px 16px;font-size:12px;line-height:1.7;color:#29404b;"></div>
+            </div>
+            <div class="option" style="margin-bottom:16px;cursor:default;">
+              <input id="safetyAccepted" type="checkbox" disabled style="opacity:.4;margin-top:3px;">
+              <label for="safetyAccepted" id="safetyAcceptedLabel" style="margin:0;opacity:.5;font-weight:600;font-size:13px;">Scroll to the bottom to unlock — I confirm I have read, understood and agree to comply with the Mandatory Health, Safety &amp; Site Information.</label>
+            </div>
+
+            <div class="field">
+              <label for="typedSigName">Typed signature (full name) <span class="req">*</span></label>
+              <input id="typedSigName" type="text" placeholder="Type full name">
+            </div>
+
+            <div class="field">
+              <label>Signature <span class="req">*</span></label>
+              <div style="border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;">
+                <canvas id="sigCanvas" style="width:100%;height:180px;display:block;touch-action:none;"></canvas>
+              </div>
+              <button type="button" id="clearSigBtn" class="btn" style="margin-top:8px;background:var(--soft);color:var(--ink);min-height:40px;">Clear signature</button>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:10px;">
+              <button type="button" id="cancelSignBtn" class="btn" style="background:var(--soft);color:var(--ink);">Back</button>
+              <button type="button" id="submitSignBtn" class="btn primary">Confirm signature</button>
+            </div>
+            <div id="signStatus" class="status"></div>
+          </div>
+
           <div class="card">
             <h2>Passes issued</h2>
             <p class="desc">Download a pass as an image to send however suits — WhatsApp, email, AirDrop, or print it.</p>
             <div id="passesContent"><p class="empty">No passes created yet.</p></div>
-          </div>
-
-        </div>
-      </div>
-
-      <div id="gatehouseState" class="hidden">
-        <div class="hero">
-          <div class="eyebrow"><span>Gatehouse Sign-In</span></div>
-          <h1 id="ghProductionName">—</h1>
-          <p>Health &amp; Safety declaration — captured in person on arrival.</p>
-        </div>
-        <div class="content">
-
-          <div id="ghRosterView">
-            <div class="card">
-              <h2>Who's signing in?</h2>
-              <p class="desc">Select the VIP who has just arrived to capture their Health &amp; Safety signature.</p>
-              <div id="ghRosterList"><p class="empty">No VIPs on the roster yet.</p></div>
-            </div>
-          </div>
-
-          <div id="ghSignView" class="hidden">
-            <div class="card">
-              <h2 id="ghSignName">—</h2>
-              <p class="desc">Read the information below, scroll to the bottom to unlock the checkbox, then sign.</p>
-              <div style="border:1.5px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden;">
-                <div id="ghSafetyDoc" style="height:260px;overflow-y:auto;background:#f8fbfc;padding:14px 16px;font-size:12px;line-height:1.7;color:#29404b;"></div>
-              </div>
-              <div class="option" style="margin-bottom:16px;cursor:default;">
-                <input id="ghSafetyAccepted" type="checkbox" disabled style="opacity:.4;margin-top:3px;">
-                <label for="ghSafetyAccepted" id="ghSafetyAcceptedLabel" style="margin:0;opacity:.5;font-weight:600;font-size:13px;">Scroll to the bottom to unlock — I confirm I have read, understood and agree to comply with the Mandatory Health, Safety &amp; Site Information.</label>
-              </div>
-
-              <div class="field">
-                <label for="ghTypedName">Typed signature (full name) <span class="req">*</span></label>
-                <input id="ghTypedName" type="text" placeholder="Type full name">
-              </div>
-
-              <div class="field">
-                <label>Signature <span class="req">*</span></label>
-                <div style="border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;">
-                  <canvas id="ghSigCanvas" style="width:100%;height:180px;display:block;touch-action:none;"></canvas>
-                </div>
-                <button type="button" id="ghClearSig" class="btn" style="margin-top:8px;background:var(--soft);color:var(--ink);min-height:40px;">Clear signature</button>
-              </div>
-
-              <div style="display:flex;gap:10px;margin-top:10px;">
-                <button type="button" id="ghCancelSign" class="btn" style="background:var(--soft);color:var(--ink);">Back</button>
-                <button type="button" id="ghSubmitSign" class="btn primary">Confirm signature</button>
-              </div>
-              <div id="ghSignStatus" class="status"></div>
-            </div>
           </div>
 
         </div>
@@ -214,12 +199,10 @@ const $$ = sel => Array.from(document.querySelectorAll(sel));
 
 const state = {
   token: '',
-  gatehouseToken: '',
   production: null,
   roster: [],
   passes: [],
-  ghRoster: [],
-  ghSigningVipId: '',
+  signingVipId: '',
   selectedDates: new Set(),
   calendarMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
 };
@@ -364,6 +347,7 @@ async function loadDashboard(){
     $('rosterPill').textContent = `${r.roster.length} of ${r.rosterCap} VIP slots used`;
     $('vipNameSuggestions').innerHTML = r.roster.map(p => `<option value="${escHtml(p.fullName)}">`).join('');
     renderPasses();
+    renderRosterSigning();
     $('loadingState').classList.add('hidden');
     $('invalidState').classList.add('hidden');
     $('mainState').classList.remove('hidden');
@@ -411,6 +395,7 @@ $('vipForm').onsubmit = async (e) => {
     $('rosterPill').textContent = `${r.roster.length} of 15 VIP slots used`;
     $('vipNameSuggestions').innerHTML = r.roster.map(p => `<option value="${escHtml(p.fullName)}">`).join('');
     renderPasses();
+    renderRosterSigning();
     $('vipName').value = '';
     state.selectedDates.clear();
     renderCalendar(); renderSelectedChips();
@@ -462,12 +447,12 @@ async function downloadPassPng(accessId, fullName, date, btn){
   }
 }
 
-// ── Gatehouse: H&S document scroll-to-unlock ───────────────────────────────
-function initGhSafetyScroll(){
-  const doc = $('ghSafetyDoc');
+// ── H&S document scroll-to-unlock (signed on the VIP's behalf) ────────────
+function initSafetyScroll(){
+  const doc = $('safetyDoc');
   doc.innerHTML = SAFETY_DOC_LINES.map(function(line){ return line ? '<p style="margin:0 0 6px;">'+line+'</p>' : '<br>'; }).join('');
   doc.scrollTop = 0;
-  const cb = $('ghSafetyAccepted'), lbl = $('ghSafetyAcceptedLabel');
+  const cb = $('safetyAccepted'), lbl = $('safetyAcceptedLabel');
   cb.checked = false; cb.disabled = true; cb.style.opacity = '.4';
   lbl.style.opacity = '.5';
   lbl.innerHTML = 'Scroll to the bottom to unlock — I confirm I have read, understood and agree to comply with the Mandatory Health, Safety &amp; Site Information.';
@@ -480,9 +465,9 @@ function initGhSafetyScroll(){
   };
 }
 
-// ── Gatehouse: signature pad (mouse + touch) ───────────────────────────────
+// ── Signature pad (mouse + touch) ──────────────────────────────────────────
 function setupSignatureCanvas(){
-  const canvas = $('ghSigCanvas');
+  const canvas = $('sigCanvas');
   if (canvas.dataset.wired) { canvas._clear(); return; }
   canvas.dataset.wired = '1';
   const ctx = canvas.getContext('2d');
@@ -520,11 +505,11 @@ function setupSignatureCanvas(){
   canvas._isEmpty = function(){ return !canvas.dataset.hasInk; };
 }
 
-// ── Gatehouse: roster + sign flow ──────────────────────────────────────────
-function renderGhRoster(){
-  const el = $('ghRosterList');
-  if (!state.ghRoster.length){ el.innerHTML = '<p class="empty">No VIPs on the roster yet.</p>'; return; }
-  el.innerHTML = state.ghRoster.map(function(r){
+// ── Roster + sign-on-behalf flow (same link as booking) ────────────────────
+function renderRosterSigning(){
+  const el = $('rosterSignList');
+  if (!state.roster.length){ el.innerHTML = '<p class="empty">No VIPs on the roster yet.</p>'; return; }
+  el.innerHTML = state.roster.map(function(r){
     const status = r.safetySigned
       ? 'Signed' + (r.signedDate ? ' ' + escHtml(longDate(r.signedDate)) : '')
       : 'Not yet signed';
@@ -540,72 +525,49 @@ function renderGhRoster(){
 }
 
 function openSignView(vipId){
-  const entry = state.ghRoster.find(function(r){ return r.vipId === vipId; });
+  const entry = state.roster.find(function(r){ return r.vipId === vipId; });
   if (!entry) return;
-  state.ghSigningVipId = vipId;
-  $('ghSignName').textContent = entry.fullName;
-  $('ghTypedName').value = '';
-  setStatus('ghSignStatus','','');
-  // Reveal the sign view FIRST — the canvas must be laid out (non-zero size)
-  // before we measure it in setupSignatureCanvas(), or it gets created at 0x0.
-  $('ghRosterView').classList.add('hidden');
-  $('ghSignView').classList.remove('hidden');
+  state.signingVipId = vipId;
+  $('signPersonName').textContent = entry.fullName;
+  $('typedSigName').value = '';
+  setStatus('signStatus','','');
+  // Reveal the sign subview FIRST — the canvas must be laid out (non-zero
+  // size) before we measure it in setupSignatureCanvas(), or it gets
+  // created at 0x0 and toDataURL() silently returns an empty image.
+  $('rosterSignCard').classList.add('hidden');
+  $('signSubview').classList.remove('hidden');
   setupSignatureCanvas();
-  initGhSafetyScroll();
+  initSafetyScroll();
 }
-$('ghCancelSign').onclick = function(){ $('ghSignView').classList.add('hidden'); $('ghRosterView').classList.remove('hidden'); };
-$('ghClearSig').onclick = function(){ $('ghSigCanvas')._clear(); };
+$('cancelSignBtn').onclick = function(){ $('signSubview').classList.add('hidden'); $('rosterSignCard').classList.remove('hidden'); };
+$('clearSigBtn').onclick = function(){ $('sigCanvas')._clear(); };
 
-$('ghSubmitSign').onclick = async function(){
-  if (!$('ghSafetyAccepted').checked){ setStatus('ghSignStatus','error','Please scroll through and accept the Health & Safety information.'); return; }
-  const typedName = $('ghTypedName').value.trim();
-  if (!typedName){ setStatus('ghSignStatus','error','Please type the full name.'); return; }
-  const canvas = $('ghSigCanvas');
-  if (canvas._isEmpty()){ setStatus('ghSignStatus','error','Please draw a signature.'); return; }
-  const btn = $('ghSubmitSign');
+$('submitSignBtn').onclick = async function(){
+  if (!$('safetyAccepted').checked){ setStatus('signStatus','error','Please scroll through and accept the Health & Safety information.'); return; }
+  const typedName = $('typedSigName').value.trim();
+  if (!typedName){ setStatus('signStatus','error','Please type the full name.'); return; }
+  const canvas = $('sigCanvas');
+  if (canvas._isEmpty()){ setStatus('signStatus','error','Please draw a signature.'); return; }
+  const btn = $('submitSignBtn');
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
     const signatureData = canvas.toDataURL('image/png');
-    const r = await server('gatehouseSubmitSignature', { token: state.gatehouseToken, vipId: state.ghSigningVipId, typedName, signatureData, signedDate: todayKey() });
-    state.ghRoster = r.roster;
-    renderGhRoster();
-    $('ghSignView').classList.add('hidden');
-    $('ghRosterView').classList.remove('hidden');
+    const r = await server('vipSubmitSignature', { token: state.token, vipId: state.signingVipId, typedName, signatureData, signedDate: todayKey(), safetyAccepted: true });
+    state.roster = r.roster;
+    renderRosterSigning();
+    $('signSubview').classList.add('hidden');
+    $('rosterSignCard').classList.remove('hidden');
   } catch(e) {
-    setStatus('ghSignStatus','error', e.message);
+    setStatus('signStatus','error', e.message);
   } finally {
     btn.disabled = false; btn.textContent = 'Confirm signature';
   }
 };
 
-async function loadGatehouse(){
-  try {
-    const r = await server('gatehouseGetRoster', state.gatehouseToken);
-    state.ghRoster = r.roster;
-    document.documentElement.style.setProperty('--accent', r.production.colour || '#18794e');
-    $('ghProductionName').textContent = r.production.name;
-    renderGhRoster();
-    $('loadingState').classList.add('hidden');
-    $('invalidState').classList.add('hidden');
-    $('gatehouseState').classList.remove('hidden');
-  } catch(e) {
-    $('invalidMessage').textContent = e.message;
-    $('loadingState').classList.add('hidden');
-    $('gatehouseState').classList.add('hidden');
-    $('invalidState').classList.remove('hidden');
-  }
-}
-
 // ── Init ────────────────────────────────────────────────────────────────
 (function init(){
   const params = new URLSearchParams(window.location.search);
   state.token = params.get('t') || '';
-  state.gatehouseToken = params.get('g') || '';
-
-  if (state.gatehouseToken) {
-    loadGatehouse();
-    return;
-  }
 
   renderCalendar(); renderSelectedChips();
   if (!state.token) {
