@@ -185,6 +185,58 @@
 
         </div>
       </div>
+
+      <div id="gatehouseState" class="hidden">
+        <div class="hero">
+          <div class="eyebrow"><span>Gatehouse Sign-In</span></div>
+          <h1 id="ghProductionName">—</h1>
+          <p>Health &amp; Safety declaration — signed on-site upon entry.</p>
+        </div>
+        <div class="content">
+
+          <div id="ghRosterView">
+            <div class="card">
+              <h2>Who's signing in?</h2>
+              <p class="desc">Select the cast or VIP who has just arrived to capture their Health &amp; Safety signature.</p>
+              <div id="ghRosterList"><p class="empty">No VIPs on the roster yet.</p></div>
+            </div>
+          </div>
+
+          <div id="ghSignView" class="hidden">
+            <div class="card">
+              <h2 id="ghSignName">—</h2>
+              <p class="desc">Read the information below, scroll to the bottom to unlock the checkbox, then sign.</p>
+              <div style="border:1.5px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden;">
+                <div id="ghSafetyDoc" style="height:260px;overflow-y:auto;background:#f8fbfc;padding:14px 16px;font-size:12px;line-height:1.7;color:#29404b;"></div>
+              </div>
+              <div class="option" style="margin-bottom:16px;cursor:default;">
+                <input id="ghSafetyAccepted" type="checkbox" disabled style="opacity:.4;margin-top:3px;">
+                <label for="ghSafetyAccepted" id="ghSafetyAcceptedLabel" style="margin:0;opacity:.5;font-weight:600;font-size:13px;">Scroll to the bottom to unlock — I confirm I have read, understood and agree to comply with the Mandatory Health, Safety &amp; Site Information.</label>
+              </div>
+
+              <div class="field">
+                <label for="ghTypedName">Typed signature (full name) <span class="req">*</span></label>
+                <input id="ghTypedName" type="text" placeholder="Type full name">
+              </div>
+
+              <div class="field">
+                <label>Signature <span class="req">*</span></label>
+                <div style="border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;">
+                  <canvas id="ghSigCanvas" style="width:100%;height:180px;display:block;touch-action:none;"></canvas>
+                </div>
+                <button type="button" id="ghClearSig" class="btn" style="margin-top:8px;background:var(--soft);color:var(--ink);min-height:40px;">Clear signature</button>
+              </div>
+
+              <div style="display:flex;gap:10px;margin-top:10px;">
+                <button type="button" id="ghCancelSign" class="btn" style="background:var(--soft);color:var(--ink);">Back</button>
+                <button type="button" id="ghSubmitSign" class="btn primary">Confirm signature</button>
+              </div>
+              <div id="ghSignStatus" class="status"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   </div>
 
@@ -199,10 +251,13 @@ const $$ = sel => Array.from(document.querySelectorAll(sel));
 
 const state = {
   token: '',
+  gatehouseToken: '',
   production: null,
   roster: [],
   passes: [],
   signingVipId: '',
+  ghRoster: [],
+  ghSigningVipId: '',
   selectedDates: new Set(),
   calendarMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
 };
@@ -448,11 +503,14 @@ async function downloadPassPng(accessId, fullName, date, btn){
 }
 
 // ── H&S document scroll-to-unlock (signed on the VIP's behalf) ────────────
-function initSafetyScroll(){
-  const doc = $('safetyDoc');
+// Shared between the VIP tool's own "sign on behalf" card and the separate
+// Gatehouse page — both need an H&S scroll-doc and a signature pad, just
+// pointed at different element ids.
+function initSafetyScroll(docId, checkboxId, labelId){
+  const doc = $(docId);
   doc.innerHTML = SAFETY_DOC_LINES.map(function(line){ return line ? '<p style="margin:0 0 6px;">'+line+'</p>' : '<br>'; }).join('');
   doc.scrollTop = 0;
-  const cb = $('safetyAccepted'), lbl = $('safetyAcceptedLabel');
+  const cb = $(checkboxId), lbl = $(labelId);
   cb.checked = false; cb.disabled = true; cb.style.opacity = '.4';
   lbl.style.opacity = '.5';
   lbl.innerHTML = 'Scroll to the bottom to unlock — I confirm I have read, understood and agree to comply with the Mandatory Health, Safety &amp; Site Information.';
@@ -466,8 +524,8 @@ function initSafetyScroll(){
 }
 
 // ── Signature pad (mouse + touch) ──────────────────────────────────────────
-function setupSignatureCanvas(){
-  const canvas = $('sigCanvas');
+function setupSignatureCanvas(canvasId){
+  const canvas = $(canvasId);
   if (canvas.dataset.wired) { canvas._clear(); return; }
   canvas.dataset.wired = '1';
   const ctx = canvas.getContext('2d');
@@ -505,7 +563,7 @@ function setupSignatureCanvas(){
   canvas._isEmpty = function(){ return !canvas.dataset.hasInk; };
 }
 
-// ── Roster + sign-on-behalf flow (same link as booking) ────────────────────
+// ── Roster + sign-on-behalf flow (same link as booking, for the production's assistant) ──
 function renderRosterSigning(){
   const el = $('rosterSignList');
   if (!state.roster.length){ el.innerHTML = '<p class="empty">No VIPs on the roster yet.</p>'; return; }
@@ -536,8 +594,8 @@ function openSignView(vipId){
   // created at 0x0 and toDataURL() silently returns an empty image.
   $('rosterSignCard').classList.add('hidden');
   $('signSubview').classList.remove('hidden');
-  setupSignatureCanvas();
-  initSafetyScroll();
+  setupSignatureCanvas('sigCanvas');
+  initSafetyScroll('safetyDoc','safetyAccepted','safetyAcceptedLabel');
 }
 $('cancelSignBtn').onclick = function(){ $('signSubview').classList.add('hidden'); $('rosterSignCard').classList.remove('hidden'); };
 $('clearSigBtn').onclick = function(){ $('sigCanvas')._clear(); };
@@ -564,10 +622,90 @@ $('submitSignBtn').onclick = async function(){
   }
 };
 
+// ── Gatehouse: dedicated on-site signing page, separate token/link ────────
+function renderGhRoster(){
+  const el = $('ghRosterList');
+  if (!state.ghRoster.length){ el.innerHTML = '<p class="empty">No VIPs on the roster yet.</p>'; return; }
+  el.innerHTML = state.ghRoster.map(function(r){
+    const status = r.safetySigned
+      ? 'Signed' + (r.signedDate ? ' ' + escHtml(longDate(r.signedDate)) : '')
+      : 'Not yet signed';
+    const action = r.safetySigned
+      ? '<span class="badge badge-green">Signed</span>'
+      : '<button type="button" class="dl-btn" data-ghsign="'+escHtml(r.vipId)+'">Sign now</button>';
+    return '<div class="option" style="cursor:default;">'
+      + '<div style="flex:1;"><strong style="display:block;font-size:14px;">'+escHtml(r.fullName)+'</strong>'
+      + '<span style="display:block;font-size:12px;color:var(--muted);margin-top:2px;">'+status+'</span></div>'
+      + action + '</div>';
+  }).join('');
+  $$('[data-ghsign]').forEach(function(b){ b.onclick = function(){ openGhSignView(b.dataset.ghsign); }; });
+}
+
+function openGhSignView(vipId){
+  const entry = state.ghRoster.find(function(r){ return r.vipId === vipId; });
+  if (!entry) return;
+  state.ghSigningVipId = vipId;
+  $('ghSignName').textContent = entry.fullName;
+  $('ghTypedName').value = '';
+  setStatus('ghSignStatus','','');
+  $('ghRosterView').classList.add('hidden');
+  $('ghSignView').classList.remove('hidden');
+  setupSignatureCanvas('ghSigCanvas');
+  initSafetyScroll('ghSafetyDoc','ghSafetyAccepted','ghSafetyAcceptedLabel');
+}
+$('ghCancelSign').onclick = function(){ $('ghSignView').classList.add('hidden'); $('ghRosterView').classList.remove('hidden'); };
+$('ghClearSig').onclick = function(){ $('ghSigCanvas')._clear(); };
+
+$('ghSubmitSign').onclick = async function(){
+  if (!$('ghSafetyAccepted').checked){ setStatus('ghSignStatus','error','Please scroll through and accept the Health & Safety information.'); return; }
+  const typedName = $('ghTypedName').value.trim();
+  if (!typedName){ setStatus('ghSignStatus','error','Please type the full name.'); return; }
+  const canvas = $('ghSigCanvas');
+  if (canvas._isEmpty()){ setStatus('ghSignStatus','error','Please draw a signature.'); return; }
+  const btn = $('ghSubmitSign');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const signatureData = canvas.toDataURL('image/png');
+    const r = await server('gatehouseSubmitSignature', { token: state.gatehouseToken, vipId: state.ghSigningVipId, typedName, signatureData, signedDate: todayKey(), safetyAccepted: true });
+    state.ghRoster = r.roster;
+    renderGhRoster();
+    $('ghSignView').classList.add('hidden');
+    $('ghRosterView').classList.remove('hidden');
+  } catch(e) {
+    setStatus('ghSignStatus','error', e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Confirm signature';
+  }
+};
+
+async function loadGatehouse(){
+  try {
+    const r = await server('gatehouseGetRoster', state.gatehouseToken);
+    state.ghRoster = r.roster;
+    document.documentElement.style.setProperty('--accent', r.production.colour || '#18794e');
+    $('ghProductionName').textContent = r.production.name;
+    renderGhRoster();
+    $('loadingState').classList.add('hidden');
+    $('invalidState').classList.add('hidden');
+    $('gatehouseState').classList.remove('hidden');
+  } catch(e) {
+    $('invalidMessage').textContent = e.message;
+    $('loadingState').classList.add('hidden');
+    $('gatehouseState').classList.add('hidden');
+    $('invalidState').classList.remove('hidden');
+  }
+}
+
 // ── Init ────────────────────────────────────────────────────────────────
 (function init(){
   const params = new URLSearchParams(window.location.search);
   state.token = params.get('t') || '';
+  state.gatehouseToken = params.get('g') || '';
+
+  if (state.gatehouseToken) {
+    loadGatehouse();
+    return;
+  }
 
   renderCalendar(); renderSelectedChips();
   if (!state.token) {
