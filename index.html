@@ -66,6 +66,13 @@
     .empty{color:var(--muted);font-size:13px;padding:10px 2px}
     .center-msg{padding:60px 24px;text-align:center;color:var(--muted)}
     .center-msg h2{color:var(--ink);margin:0 0 8px}
+    .modal-backdrop{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:18px;background:rgba(7,30,42,.55);overflow-y:auto}
+    .modal-card{width:min(100%,520px);max-height:calc(100vh - 36px);overflow:auto;border-radius:16px;background:#fff;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+    .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px 12px;border-bottom:1px solid var(--line)}
+    .modal-head h2{margin:0 0 3px;font-size:18px}.modal-head p{margin:0;color:var(--muted);font-size:13px}
+    .modal-close{width:34px;height:34px;border:0;border-radius:8px;background:var(--soft);color:var(--ink);font-size:20px;line-height:1;flex-shrink:0}
+    .modal-body{padding:18px 20px 22px}
+    .modal-actions{display:flex;gap:10px;margin-top:14px}
   </style>
 </head>
 <body>
@@ -135,6 +142,12 @@
                 </div>
               </div>
 
+              <div class="field">
+                <label for="vipEmail">Email the pass to <span style="font-weight:500;color:var(--muted)">(optional)</span></label>
+                <input id="vipEmail" type="text" inputmode="email" autocomplete="off" placeholder="name@example.com">
+                <div class="hint">If you add an address, each pass is emailed straight away. You can also download or email any pass later from the list below.</div>
+              </div>
+
               <button id="submitVip" class="btn primary" type="submit">Generate pass(es)</button>
               <div id="vipFormStatus" class="status"></div>
             </form>
@@ -186,53 +199,80 @@
         </div>
       </div>
 
+      <div id="crewState" class="hidden">
+        <div class="hero">
+          <div class="eyebrow"><span>Crew list</span></div>
+          <h1 id="crewProductionName">—</h1>
+          <p>Live list of who has a pass for the selected day. Read-only.</p>
+          <div class="roster-pill" id="crewCountPill">—</div>
+        </div>
+        <div class="content">
+          <div class="card">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">
+              <button type="button" class="dl-btn" id="crewPrev">‹ Prev</button>
+              <input id="crewDatePicker" type="date" style="width:auto;min-height:38px;border:1.5px solid #cfdadd;border-radius:10px;padding:6px 10px;font-size:14px;">
+              <button type="button" class="dl-btn" id="crewToday">Today</button>
+              <button type="button" class="dl-btn" id="crewNext">Next ›</button>
+              <button type="button" class="dl-btn" id="crewCsv" style="margin-left:auto;">Download CSV</button>
+            </div>
+            <input id="crewSearch" type="text" placeholder="Search by name or vehicle…" style="margin-bottom:12px;">
+            <div id="crewTableWrap"><p class="empty">Loading…</p></div>
+            <p id="crewUpdated" class="hint" style="margin-top:10px;"></p>
+          </div>
+        </div>
+      </div>
+
       <div id="gatehouseState" class="hidden">
         <div class="hero">
-          <div class="eyebrow"><span>Gatehouse Sign-In</span></div>
+          <div class="eyebrow"><span>Health &amp; Safety sign-in</span></div>
           <h1 id="ghProductionName">—</h1>
-          <p>Health &amp; Safety declaration — signed on-site upon entry.</p>
+          <p>Please read the information below, then sign. This takes about a minute.</p>
         </div>
         <div class="content">
 
-          <div id="ghRosterView">
-            <div class="card">
-              <h2>Who's signing in?</h2>
-              <p class="desc">Select the cast or VIP who has just arrived to capture their Health &amp; Safety signature.</p>
-              <div id="ghRosterList"><p class="empty">No VIPs on the roster yet.</p></div>
+          <div id="ghFormCard" class="card">
+            <h2>Health &amp; Safety declaration</h2>
+            <p class="desc">Read the information, scroll to the bottom to unlock the tick box, then add your name and signature.</p>
+            <div style="border:1.5px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden;">
+              <div id="ghSafetyDoc" style="height:260px;overflow-y:auto;background:#f8fbfc;padding:14px 16px;font-size:12px;line-height:1.7;color:#29404b;"></div>
             </div>
+            <div class="option" style="margin-bottom:16px;cursor:default;">
+              <input id="ghSafetyAccepted" type="checkbox" disabled style="opacity:.4;margin-top:3px;">
+              <label for="ghSafetyAccepted" id="ghSafetyAcceptedLabel" style="margin:0;opacity:.5;font-weight:600;font-size:13px;">Scroll to the bottom to unlock — I confirm I have read, understood and agree to comply with the Mandatory Health, Safety &amp; Site Information.</label>
+            </div>
+
+            <div class="field">
+              <label for="ghTypedName">Full name <span class="req">*</span></label>
+              <input id="ghTypedName" type="text" placeholder="Type your full name" autocomplete="name">
+            </div>
+
+            <div class="field">
+              <label>Signature <span class="req">*</span></label>
+              <div style="border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;">
+                <canvas id="ghSigCanvas" style="width:100%;height:180px;display:block;touch-action:none;"></canvas>
+              </div>
+              <button type="button" id="ghClearSig" class="btn" style="margin-top:8px;background:var(--soft);color:var(--ink);min-height:40px;">Clear signature</button>
+            </div>
+
+            <div class="field">
+              <label for="ghDate">Date</label>
+              <input id="ghDate" type="text" readonly>
+            </div>
+
+            <div style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+              <label for="ghTrap">Leave this field empty</label>
+              <input id="ghTrap" type="text" tabindex="-1" autocomplete="off">
+            </div>
+
+            <button type="button" id="ghSubmitSign" class="btn primary">Sign declaration</button>
+            <div id="ghSignStatus" class="status"></div>
           </div>
 
-          <div id="ghSignView" class="hidden">
-            <div class="card">
-              <h2 id="ghSignName">—</h2>
-              <p class="desc">Read the information below, scroll to the bottom to unlock the checkbox, then sign.</p>
-              <div style="border:1.5px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden;">
-                <div id="ghSafetyDoc" style="height:260px;overflow-y:auto;background:#f8fbfc;padding:14px 16px;font-size:12px;line-height:1.7;color:#29404b;"></div>
-              </div>
-              <div class="option" style="margin-bottom:16px;cursor:default;">
-                <input id="ghSafetyAccepted" type="checkbox" disabled style="opacity:.4;margin-top:3px;">
-                <label for="ghSafetyAccepted" id="ghSafetyAcceptedLabel" style="margin:0;opacity:.5;font-weight:600;font-size:13px;">Scroll to the bottom to unlock — I confirm I have read, understood and agree to comply with the Mandatory Health, Safety &amp; Site Information.</label>
-              </div>
-
-              <div class="field">
-                <label for="ghTypedName">Typed signature (full name) <span class="req">*</span></label>
-                <input id="ghTypedName" type="text" placeholder="Type full name">
-              </div>
-
-              <div class="field">
-                <label>Signature <span class="req">*</span></label>
-                <div style="border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;">
-                  <canvas id="ghSigCanvas" style="width:100%;height:180px;display:block;touch-action:none;"></canvas>
-                </div>
-                <button type="button" id="ghClearSig" class="btn" style="margin-top:8px;background:var(--soft);color:var(--ink);min-height:40px;">Clear signature</button>
-              </div>
-
-              <div style="display:flex;gap:10px;margin-top:10px;">
-                <button type="button" id="ghCancelSign" class="btn" style="background:var(--soft);color:var(--ink);">Back</button>
-                <button type="button" id="ghSubmitSign" class="btn primary">Confirm signature</button>
-              </div>
-              <div id="ghSignStatus" class="status"></div>
-            </div>
+          <div id="ghDoneCard" class="card hidden" style="text-align:center;">
+            <div style="font-size:44px;line-height:1;color:var(--accent);">✓</div>
+            <h2 id="ghDoneTitle" style="margin-top:8px;">Thank you</h2>
+            <p class="desc" id="ghDoneText">Your Health &amp; Safety declaration has been signed and recorded.</p>
+            <button type="button" id="ghAnother" class="btn primary">Sign for someone else</button>
           </div>
 
         </div>
@@ -240,10 +280,32 @@
     </div>
   </div>
 
-  <!-- Hidden iframe used to render a pass's HTML before turning it into a PNG -->
-  <iframe id="passRenderFrame" style="position:fixed;left:-9999px;top:0;width:480px;height:720px;border:0;"></iframe>
+  <div id="passModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-head"><div><h2>Pass ready</h2><p id="passModalSub"></p></div><button type="button" class="modal-close" id="passModalClose" aria-label="Close">×</button></div>
+      <div class="modal-body">
+        <img id="passModalImg" alt="Entry pass" style="width:100%;border-radius:12px;display:block;border:1px solid var(--line);">
+        <div class="modal-actions">
+          <a id="passModalSave" class="btn primary" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">Save PNG</a>
+          <button type="button" id="passModalShare" class="btn hidden" style="background:var(--soft);color:var(--ink);">Share…</button>
+        </div>
+        <button type="button" id="passModalEmail" class="btn" style="margin-top:10px;background:var(--soft);color:var(--ink);">Email this pass</button>
+        <p class="hint">If the download didn't start, tap Save PNG — or press and hold the image to save it.</p>
+      </div>
+    </div>
+  </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <div id="emailModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-head"><div><h2>Email this pass</h2><p id="emailModalSub"></p></div><button type="button" class="modal-close" id="emailModalClose" aria-label="Close">×</button></div>
+      <div class="modal-body">
+        <div class="field"><label for="emailModalInput">Email address</label><input id="emailModalInput" type="text" inputmode="email" autocomplete="off" placeholder="name@example.com"></div>
+        <button type="button" id="emailModalSend" class="btn primary">Send pass</button>
+        <div id="emailModalStatus" class="status"></div>
+      </div>
+    </div>
+  </div>
+
   <script>
 const WORKER_URL = 'https://basecamp-gwr.bt7frcbfh2.workers.dev';
 const $  = id => document.getElementById(id);
@@ -252,12 +314,14 @@ const $$ = sel => Array.from(document.querySelectorAll(sel));
 const state = {
   token: '',
   gatehouseToken: '',
+  crewToken: '',
+  lastEmail: '',
+  crewDate: '',
+  crewPeople: [],
   production: null,
   roster: [],
   passes: [],
   signingVipId: '',
-  ghRoster: [],
-  ghSigningVipId: '',
   selectedDates: new Set(),
   calendarMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
 };
@@ -419,13 +483,14 @@ function renderPasses(){
   if (!state.passes.length){ el.innerHTML = '<p class="empty">No passes created yet.</p>'; return; }
   const rows = state.passes.map(r => `
     <tr>
-      <td><strong>${escHtml(r.fullName)}</strong></td>
+      <td><strong>${escHtml(r.fullName)}</strong>${r.emailedTo ? `<div class="hint" style="margin:2px 0 0;">Emailed to ${escHtml(r.emailedTo)}</div>` : ''}</td>
       <td>${escHtml(longDate(r.date))}</td>
       <td>${r.vehicleRequired ? `<span class="badge badge-green">${escHtml(r.vehicleReg)}</span>` : '<span class="badge badge-grey">No vehicle</span>'}</td>
-      <td><button type="button" class="dl-btn" data-dl="${escHtml(r.accessId)}" data-name="${escHtml(r.fullName)}" data-date="${escHtml(r.date)}">Download PNG</button></td>
+      <td style="white-space:nowrap;"><button type="button" class="dl-btn" data-dl="${escHtml(r.accessId)}">Download PNG</button> <button type="button" class="dl-btn" data-email="${escHtml(r.accessId)}">Email</button></td>
     </tr>`).join('');
   el.innerHTML = `<div style="overflow-x:auto"><table class="passes-table"><thead><tr><th>Name</th><th>Date</th><th>Vehicle</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  $$('[data-dl]').forEach(b => b.onclick = () => downloadPassPng(b.dataset.dl, b.dataset.name, b.dataset.date, b));
+  $$('[data-dl]').forEach(b => b.onclick = () => downloadPassPng(b.dataset.dl, b));
+  $$('[data-email]').forEach(b => b.onclick = () => openEmailModal(b.dataset.email));
 }
 
 // ── Submit new VIP / dates ─────────────────────────────────────────────────
@@ -441,24 +506,28 @@ $('vipForm').onsubmit = async (e) => {
   if (vehicleRequired && !vehicleReg){ setStatus('vipFormStatus','error','Please enter the vehicle registration.'); return; }
   if (vehicleRequired && !parkingType){ setStatus('vipFormStatus','error','Please confirm whether they are parking on site or just dropping off.'); return; }
 
+  const email = $('vipEmail').value.trim();
+  if (email && !looksLikeEmail(email)){ setStatus('vipFormStatus','error',"That email address doesn't look right."); return; }
+  if (email) state.lastEmail = email;
   const btn = $('submitVip');
   btn.disabled = true; btn.textContent = 'Generating…';
   try {
-    const r = await server('vipCreatePasses', { token: state.token, fullName, dates, vehicleRequired, vehicleReg, parkingType });
+    const r = await server('vipCreatePasses', { token: state.token, fullName, dates, vehicleRequired, vehicleReg, parkingType, email });
     state.roster = r.roster;
     state.passes = r.passes;
     $('rosterPill').textContent = `${r.roster.length} of 15 VIP slots used`;
     $('vipNameSuggestions').innerHTML = r.roster.map(p => `<option value="${escHtml(p.fullName)}">`).join('');
     renderPasses();
     renderRosterSigning();
-    $('vipName').value = '';
+    $('vipName').value = ''; $('vipEmail').value = '';
     state.selectedDates.clear();
     renderCalendar(); renderSelectedChips();
     $('vehicleNo').checked = true;
     $('vehicleRegWrap').classList.add('hidden');
     $('parkingTypeWrap').classList.add('hidden');
     $('vipVehicleReg').value = '';
-    setStatus('vipFormStatus','success', r.message);
+    if (email && !r.emailed) setStatus('vipFormStatus','error', r.message + (r.emailErrors && r.emailErrors.length ? ' (' + r.emailErrors.join('; ') + ')' : ''));
+    else setStatus('vipFormStatus','success', r.message);
   } catch(e) {
     setStatus('vipFormStatus','error', e.message);
   } finally {
@@ -466,41 +535,201 @@ $('vipForm').onsubmit = async (e) => {
   }
 };
 
-// ── PNG download (render the real pass HTML, then screenshot it) ──────────
-async function downloadPassPng(accessId, fullName, date, btn){
-  const originalText = btn.textContent;
+// ── Pass image: drawn straight onto a canvas (no external libraries or hidden pages, so nothing to fail to load) ──
+const LOGO_LW = 'https://jamesplayer85.github.io/980-gwr-signin/assets/location-works-logo-clean.png';
+const LOGO_BC = 'https://jamesplayer85.github.io/980-gwr-signin/assets/base-camp-logo-clean.png';
+const PASS_FONT = 'Arial, Helvetica, sans-serif';
+const logoCache = {};
+function loadLogo(url){
+  if (!logoCache[url]) logoCache[url] = new Promise(function(resolve){
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = function(){ resolve(img); };
+    img.onerror = function(){ resolve(null); };          // blocked/unavailable -> text wordmark instead
+    setTimeout(function(){ resolve(null); }, 5000);
+    img.src = url;
+  });
+  return logoCache[url];
+}
+function rr(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function spacing(ctx, v){ if ('letterSpacing' in ctx) ctx.letterSpacing = v; }
+function wrapLines(ctx, text, maxW){
+  const words = String(text || '').split(/\s+/).filter(Boolean), lines = []; let cur = '';
+  words.forEach(function(w){ const t = cur ? cur + ' ' + w : w; if (!cur || ctx.measureText(t).width <= maxW) cur = t; else { lines.push(cur); cur = w; } });
+  if (cur) lines.push(cur);
+  return lines.length ? lines : [''];
+}
+function drawLogo(ctx, img, x, y, h, align, fallback){
+  if (img){ const w = img.width * h / img.height; ctx.drawImage(img, align === 'right' ? x - w : x, y, w, h); return; }
+  ctx.save(); ctx.fillStyle = '#14232b'; ctx.font = 'bold 15px ' + PASS_FONT; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  ctx.fillText(fallback, x, y + h / 2); ctx.restore();
+}
+
+async function renderPassCanvas(pass){
+  const lw = await loadLogo(LOGO_LW), bc = await loadLogo(LOGO_BC);
+  const prod = state.production || {};
+  const colour = prod.colour || '#18794e';
+  const entry = state.roster.find(function(v){ return v.vipId === pass.vipId; });
+  const signed = !!(entry && entry.safetySigned);
+  const S = 2, PAD = 20, CW = 480, W = CW + PAD * 2;
+  const pp = pass.date.split('-').map(Number);
+  const dateStr = new Intl.DateTimeFormat('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }).format(new Date(pp[0], pp[1]-1, pp[2], 12)).toUpperCase();
+  const rows = [
+    ['Name', pass.fullName],
+    ['Company / Production', prod.name || ''],
+    ['Reason for Visit', 'VIP Access'],
+    ['Vehicle Registration', pass.vehicleRequired ? pass.vehicleReg : 'No vehicle'],
+    ['Site', '980 Great West Road']
+  ];
+  // Same wording as the emailed pass
+  const note = signed ? "\u2713 This VIP's Health & Safety declaration has been signed. A digital record is on file."
+                      : "\u26A0 This VIP's Health & Safety declaration has not yet been signed. A digital record will be kept once completed.";
+
+  // ── measure ──
+  const mctx = document.createElement('canvas').getContext('2d');
+  const innerW = CW - 40 - 44;
+  mctx.font = 'bold 18px ' + PASS_FONT;
+  const rowLines = rows.map(function(r){ return wrapLines(mctx, r[1], innerW); });
+  const rowH = rowLines.map(function(l){ return 18 + l.length * 24 + 14; });
+  mctx.font = 'bold 12px ' + PASS_FONT;
+  const noteLines = wrapLines(mctx, note, innerW);
+  const noteH = noteLines.length * 18 + 28, refH = 38, detailsPad = 20;
+  const headerH = 84, validTop = 190, validH = 80, detailsTop = validTop + validH + 24;
+  const detailsH = detailsPad + rowH.reduce(function(a, b){ return a + b; }, 0) + 6 + noteH + refH;
+  const cardH = detailsTop + detailsH + 82;
+
+  // ── draw ──
+  const canvas = document.createElement('canvas');
+  canvas.width = W * S; canvas.height = (cardH + PAD * 2) * S;
+  const ctx = canvas.getContext('2d'); ctx.scale(S, S);
+  ctx.fillStyle = '#f0f0f0'; ctx.fillRect(0, 0, W, cardH + PAD * 2);
+  const X = PAD, Y = PAD;
+  ctx.save(); rr(ctx, X, Y, CW, cardH, 16); ctx.clip();
+  ctx.fillStyle = colour; ctx.fillRect(X, Y, CW, cardH);
+  ctx.fillStyle = '#fff'; ctx.fillRect(X, Y, CW, headerH);
+  drawLogo(ctx, lw, X + 24, Y + 18, 48, 'left', 'LOCATION WORKS');
+  drawLogo(ctx, bc, X + CW - 24, Y + 20, 44, 'right', 'THE BASE CAMP CO.');
+
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = 'bold 14px ' + PASS_FONT; spacing(ctx, '1.7px');
+  ctx.fillText('ACCESS GRANTED', X + CW / 2, Y + 116); spacing(ctx, '0px');
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 40px ' + PASS_FONT; ctx.fillText('ENTRY PASS', X + CW / 2, Y + 136);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.15)'; rr(ctx, X + 20, Y + validTop, CW - 40, validH, 12); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.font = 'bold 12px ' + PASS_FONT; spacing(ctx, '1.2px');
+  ctx.fillText('VALID FOR', X + CW / 2, Y + validTop + 16); spacing(ctx, '0px');
+  let fs = 26; ctx.font = 'bold ' + fs + 'px ' + PASS_FONT;
+  while (ctx.measureText(dateStr).width > CW - 40 - 30 && fs > 14){ fs--; ctx.font = 'bold ' + fs + 'px ' + PASS_FONT; }
+  ctx.fillStyle = '#fff'; ctx.fillText(dateStr, X + CW / 2, Y + validTop + 38);
+
+  const dTop = Y + detailsTop, tx = X + 20 + 22;
+  ctx.fillStyle = '#fff'; rr(ctx, X + 20, dTop, CW - 40, detailsH, 12); ctx.fill();
+  ctx.save(); rr(ctx, X + 20, dTop, CW - 40, detailsH, 12); ctx.clip();
+  ctx.textAlign = 'left';
+  let yy = dTop + detailsPad;
+  rows.forEach(function(r, i){
+    ctx.fillStyle = '#888'; ctx.font = 'bold 10px ' + PASS_FONT; spacing(ctx, '1px'); ctx.fillText(r[0].toUpperCase(), tx, yy); spacing(ctx, '0px');
+    ctx.fillStyle = '#14232b'; ctx.font = 'bold 18px ' + PASS_FONT;
+    rowLines[i].forEach(function(line, li){ ctx.fillText(line, tx, yy + 18 + li * 24); });
+    yy += rowH[i];
+    if (i < rows.length - 1){ ctx.fillStyle = '#eee'; ctx.fillRect(tx, yy - 7, innerW, 1); }
+  });
+  const nTop = yy + 6;
+  ctx.fillStyle = signed ? '#eef7f2' : '#fff7e6'; ctx.fillRect(X + 20, nTop, CW - 40, noteH);
+  ctx.fillStyle = signed ? '#e0efe8' : '#ffe8b8'; ctx.fillRect(X + 20, nTop, CW - 40, 1);
+  ctx.fillStyle = signed ? '#235c43' : '#8a5a00'; ctx.font = 'bold 12px ' + PASS_FONT;
+  noteLines.forEach(function(line, i){ ctx.fillText(line, tx, nTop + 14 + i * 18); });
+  const rTop = nTop + noteH;
+  ctx.fillStyle = '#eef7f2'; ctx.fillRect(X + 20, rTop, CW - 40, refH);
+  ctx.fillStyle = '#e0efe8'; ctx.fillRect(X + 20, rTop, CW - 40, 1);
+  ctx.fillStyle = '#235c43'; ctx.font = 'bold 12px ' + PASS_FONT; ctx.fillText('PASS REF: ' + pass.accessId, tx, rTop + 13);
+  ctx.restore();
+
+  const dBottom = dTop + detailsH;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 14px ' + PASS_FONT; spacing(ctx, '0.6px');
+  ctx.fillText('SHOW THIS PASS TO SECURITY ON ARRIVAL', X + CW / 2, dBottom + 20); spacing(ctx, '0px');
+  ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.font = '12px ' + PASS_FONT;
+  ctx.fillText('Main Gate House \u00B7 980 Great West Road, Brentford, TW8 9GS', X + CW / 2, dBottom + 42);
+  ctx.restore();
+  return canvas;
+}
+async function passToBlob(pass){
+  const canvas = await renderPassCanvas(pass);
+  return new Promise(function(resolve, reject){ canvas.toBlob(function(b){ b ? resolve(b) : reject(new Error('The image could not be created.')); }, 'image/png'); });
+}
+
+// ── Pass preview / download modal ──
+let passModalUrl = '', passModalBlob = null, passModalPass = null;
+function showPassModal(pass, blob, fname){
+  closePassModal();
+  passModalBlob = blob; passModalPass = pass; passModalUrl = URL.createObjectURL(blob);
+  $('passModalImg').src = passModalUrl;
+  const save = $('passModalSave'); save.href = passModalUrl; save.download = fname;
+  $('passModalSub').textContent = pass.fullName + ' · ' + longDate(pass.date);
+  let canShare = false;
+  try { canShare = !!(navigator.canShare && navigator.canShare({ files: [new File([blob], fname, { type:'image/png' })] })); } catch(e){}
+  $('passModalShare').classList.toggle('hidden', !canShare);
+  $('passModal').classList.remove('hidden');
+}
+function closePassModal(){
+  $('passModal').classList.add('hidden');
+  if (passModalUrl){ const u = passModalUrl; passModalUrl = ''; setTimeout(function(){ URL.revokeObjectURL(u); }, 500); }
+  $('passModalImg').removeAttribute('src');
+}
+async function downloadPassPng(accessId, btn){
+  const pass = state.passes.find(function(p){ return p.accessId === accessId; });
+  if (!pass) return;
+  const label = btn.textContent;
   btn.disabled = true; btn.textContent = 'Preparing…';
   try {
-    const res = await fetch(WORKER_URL + '/vip-api', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ method: 'vipGetPassHTML', args: [{ token: state.token, accessId }] })
-    });
-    if (!res.ok) { const d = await res.json().catch(()=>({})); throw new Error(d.error || 'Could not load the pass.'); }
-    const html = await res.text();
-
-    const frame = $('passRenderFrame');
-    await new Promise((resolve, reject) => {
-      frame.onload = resolve;
-      frame.onerror = () => reject(new Error('Could not render the pass.'));
-      frame.srcdoc = html;
-    });
-    // Give logo images a moment to finish loading inside the iframe
-    await new Promise(r => setTimeout(r, 400));
-
-    const target = frame.contentDocument.body;
-    const canvas = await html2canvas(target, { backgroundColor: '#f0f0f0', scale: 2, useCORS: true });
-    const dataUrl = canvas.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = `${fullName.replace(/[^a-z0-9]+/gi,'-')}-${date}-pass.png`;
-    a.click();
+    const blob = await passToBlob(pass);
+    const fname = pass.fullName.replace(/[^a-z0-9]+/gi, '-') + '-' + pass.date + '-pass.png';
+    showPassModal(pass, blob, fname);
+    // Best-effort immediate download; the modal's Save PNG button is the guaranteed fallback.
+    const a = document.createElement('a'); a.href = passModalUrl; a.download = fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
   } catch(e) {
-    alert('Could not download this pass: ' + e.message);
+    alert('Could not create this pass image: ' + e.message);
   } finally {
-    btn.disabled = false; btn.textContent = originalText;
+    btn.disabled = false; btn.textContent = label;
   }
 }
+$('passModalShare').onclick = async function(){
+  try { await navigator.share({ files: [new File([passModalBlob], $('passModalSave').download, { type:'image/png' })], title: 'Entry pass' }); } catch(e){ /* cancelled */ }
+};
+$('passModalEmail').onclick = function(){ if (passModalPass){ const id = passModalPass.accessId; closePassModal(); openEmailModal(id); } };
+$('passModalClose').onclick = closePassModal;
+$('passModal').onclick = function(e){ if (e.target === $('passModal')) closePassModal(); };
+
+// ── Email a pass ──
+let emailTarget = '';
+function looksLikeEmail(v){ return v.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function openEmailModal(accessId){
+  const pass = state.passes.find(function(p){ return p.accessId === accessId; });
+  if (!pass) return;
+  emailTarget = accessId;
+  $('emailModalSub').textContent = pass.fullName + ' · ' + longDate(pass.date);
+  $('emailModalInput').value = pass.emailedTo || state.lastEmail || '';
+  setStatus('emailModalStatus', '', '');
+  $('emailModal').classList.remove('hidden');
+  setTimeout(function(){ $('emailModalInput').focus(); }, 50);
+}
+function closeEmailModal(){ $('emailModal').classList.add('hidden'); }
+$('emailModalSend').onclick = async function(){
+  const email = $('emailModalInput').value.trim();
+  if (!looksLikeEmail(email)){ setStatus('emailModalStatus','error','Please enter a valid email address.'); return; }
+  const btn = $('emailModalSend'); btn.disabled = true; btn.textContent = 'Sending…';
+  try {
+    const r = await server('vipEmailPass', { token: state.token, accessId: emailTarget, email });
+    state.passes = r.passes; state.lastEmail = email; renderPasses();
+    setStatus('emailModalStatus','success', r.message);
+    setTimeout(closeEmailModal, 1400);
+  } catch(e) { setStatus('emailModalStatus','error', e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Send pass'; }
+};
+$('emailModalClose').onclick = closeEmailModal;
+$('emailModal').onclick = function(e){ if (e.target === $('emailModal')) closeEmailModal(); };
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ closePassModal(); closeEmailModal(); } });
 
 // ── H&S document scroll-to-unlock (signed on the VIP's behalf) ────────────
 // Shared between the VIP tool's own "sign on behalf" card and the separate
@@ -541,7 +770,7 @@ function setupSignatureCanvas(canvasId){
   function pos(e){
     const r = canvas.getBoundingClientRect();
     const p = e.touches ? e.touches[0] : e;
-    return { x: p.clientX - r.left, y: p.clientY - r.top };
+    return { x: (p.clientX - r.left) * (rect.width / r.width), y: (p.clientY - r.top) * (rect.height / r.height) };
   }
   function start(e){ e.preventDefault(); drawing = true; last = pos(e); canvas.dataset.hasInk = '1'; }
   function move(e){
@@ -622,72 +851,50 @@ $('submitSignBtn').onclick = async function(){
   }
 };
 
-// ── Gatehouse: dedicated on-site signing page, separate token/link ────────
-function renderGhRoster(){
-  const el = $('ghRosterList');
-  if (!state.ghRoster.length){ el.innerHTML = '<p class="empty">No VIPs on the roster yet.</p>'; return; }
-  el.innerHTML = state.ghRoster.map(function(r){
-    const status = r.safetySigned
-      ? 'Signed' + (r.signedDate ? ' ' + escHtml(longDate(r.signedDate)) : '')
-      : 'Not yet signed';
-    const action = r.safetySigned
-      ? '<span class="badge badge-green">Signed</span>'
-      : '<button type="button" class="dl-btn" data-ghsign="'+escHtml(r.vipId)+'">Sign now</button>';
-    return '<div class="option" style="cursor:default;">'
-      + '<div style="flex:1;"><strong style="display:block;font-size:14px;">'+escHtml(r.fullName)+'</strong>'
-      + '<span style="display:block;font-size:12px;color:var(--muted);margin-top:2px;">'+status+'</span></div>'
-      + action + '</div>';
-  }).join('');
-  $$('[data-ghsign]').forEach(function(b){ b.onclick = function(){ openGhSignView(b.dataset.ghsign); }; });
+// ── Gatehouse: open on-site H&S signing page (one link per production, no pre-booking) ──
+function resetGhForm(){
+  $('ghTypedName').value = ''; $('ghTrap').value = '';
+  $('ghDate').value = new Intl.DateTimeFormat('en-GB').format(new Date());
+  setStatus('ghSignStatus', '', '');
+  setupSignatureCanvas('ghSigCanvas');                       // clears the pad (sizes it first time round)
+  initSafetyScroll('ghSafetyDoc', 'ghSafetyAccepted', 'ghSafetyAcceptedLabel');   // re-locks the tick box
 }
-
-function openGhSignView(vipId){
-  const entry = state.ghRoster.find(function(r){ return r.vipId === vipId; });
-  if (!entry) return;
-  state.ghSigningVipId = vipId;
-  $('ghSignName').textContent = entry.fullName;
-  $('ghTypedName').value = '';
-  setStatus('ghSignStatus','','');
-  $('ghRosterView').classList.add('hidden');
-  $('ghSignView').classList.remove('hidden');
-  setupSignatureCanvas('ghSigCanvas');
-  initSafetyScroll('ghSafetyDoc','ghSafetyAccepted','ghSafetyAcceptedLabel');
-}
-$('ghCancelSign').onclick = function(){ $('ghSignView').classList.add('hidden'); $('ghRosterView').classList.remove('hidden'); };
 $('ghClearSig').onclick = function(){ $('ghSigCanvas')._clear(); };
-
 $('ghSubmitSign').onclick = async function(){
-  if (!$('ghSafetyAccepted').checked){ setStatus('ghSignStatus','error','Please scroll through and accept the Health & Safety information.'); return; }
-  const typedName = $('ghTypedName').value.trim();
-  if (!typedName){ setStatus('ghSignStatus','error','Please type the full name.'); return; }
+  const fullName = $('ghTypedName').value.trim();
+  if (!$('ghSafetyAccepted').checked){ setStatus('ghSignStatus','error','Please scroll through the information and tick the confirmation box.'); return; }
+  if (fullName.length < 2){ setStatus('ghSignStatus','error','Please type your full name.'); return; }
   const canvas = $('ghSigCanvas');
-  if (canvas._isEmpty()){ setStatus('ghSignStatus','error','Please draw a signature.'); return; }
+  if (canvas._isEmpty()){ setStatus('ghSignStatus','error','Please draw your signature.'); return; }
   const btn = $('ghSubmitSign');
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    const signatureData = canvas.toDataURL('image/png');
-    const r = await server('gatehouseSubmitSignature', { token: state.gatehouseToken, vipId: state.ghSigningVipId, typedName, signatureData, signedDate: todayKey(), safetyAccepted: true });
-    state.ghRoster = r.roster;
-    renderGhRoster();
-    $('ghSignView').classList.add('hidden');
-    $('ghRosterView').classList.remove('hidden');
+    const r = await server('gatehouseSubmitSignature', { token: state.gatehouseToken, fullName, signatureData: canvas.toDataURL('image/png'), signedDate: todayKey(), safetyAccepted: true, trap: $('ghTrap').value });
+    $('ghDoneTitle').textContent = 'Thank you, ' + (r.fullName || fullName);
+    $('ghFormCard').classList.add('hidden');
+    $('ghDoneCard').classList.remove('hidden');
+    window.scrollTo(0, 0);
   } catch(e) {
     setStatus('ghSignStatus','error', e.message);
   } finally {
-    btn.disabled = false; btn.textContent = 'Confirm signature';
+    btn.disabled = false; btn.textContent = 'Sign declaration';
   }
 };
-
+$('ghAnother').onclick = function(){
+  $('ghDoneCard').classList.add('hidden');
+  $('ghFormCard').classList.remove('hidden');
+  resetGhForm();
+  window.scrollTo(0, 0);
+};
 async function loadGatehouse(){
   try {
-    const r = await server('gatehouseGetRoster', state.gatehouseToken);
-    state.ghRoster = r.roster;
+    const r = await server('gatehouseGetInfo', state.gatehouseToken);
     document.documentElement.style.setProperty('--accent', r.production.colour || '#18794e');
     $('ghProductionName').textContent = r.production.name;
-    renderGhRoster();
     $('loadingState').classList.add('hidden');
     $('invalidState').classList.add('hidden');
     $('gatehouseState').classList.remove('hidden');
+    resetGhForm();                                           // after it is visible, so the pad can be measured
   } catch(e) {
     $('invalidMessage').textContent = e.message;
     $('loadingState').classList.add('hidden');
@@ -696,17 +903,101 @@ async function loadGatehouse(){
   }
 }
 
+// ── Crew list: read-only live view for a production ───────────────────────
+function parkingLabel(t){ return t === 'onsite' ? 'Parking on site' : t === 'dropoff' ? 'Drop-off only' : ''; }
+function crewFiltered(){
+  const q = ($('crewSearch').value || '').trim().toLowerCase();
+  return state.crewPeople.filter(function(p){
+    return !q || p.fullName.toLowerCase().indexOf(q) !== -1 || (p.vehicleReg || '').toLowerCase().indexOf(q) !== -1;
+  });
+}
+function renderCrewList(){
+  const rows = crewFiltered();
+  $('crewCountPill').textContent = state.crewPeople.length + ' with a pass · ' + longDate(state.crewDate);
+  if (!rows.length){
+    $('crewTableWrap').innerHTML = '<p class="empty">' + (state.crewPeople.length ? 'No matches.' : 'No passes issued for this day yet.') + '</p>';
+    return;
+  }
+  const body = rows.map(function(p){
+    const vip = p.source === 'vip' ? '<span class="badge" style="margin-left:6px;background:#fdf0d5;color:#8a5a00;">VIP</span>' : '';
+    const veh = p.vehicleRequired ? '<span class="badge badge-green">'+escHtml(p.vehicleReg)+'</span>' : '<span class="badge badge-grey">No vehicle</span>';
+    return '<tr><td><strong>'+escHtml(p.fullName)+'</strong>'+vip+'</td><td>'+veh+'</td><td>'+escHtml(p.vehicleRequired ? parkingLabel(p.parkingType) : '')+'</td></tr>';
+  }).join('');
+  $('crewTableWrap').innerHTML = '<div style="overflow-x:auto"><table class="passes-table"><thead><tr><th>Name</th><th>Vehicle</th><th>Parking</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+}
+async function loadCrewList(){
+  try {
+    const r = await server('crewGetList', state.crewToken, state.crewDate);
+    state.crewPeople = r.people;
+    $('crewProductionName').textContent = r.production.name;
+    document.documentElement.style.setProperty('--accent', r.production.colour || '#18794e');
+    $('crewDatePicker').value = state.crewDate;
+    renderCrewList();
+    $('crewUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + ' · refreshes automatically every minute';
+    $('loadingState').classList.add('hidden');
+    $('invalidState').classList.add('hidden');
+    $('crewState').classList.remove('hidden');
+  } catch(e) {
+    if (!$('crewState').classList.contains('hidden')) {   // already showing a list: keep it, note the problem inline
+      $('crewUpdated').textContent = 'Could not refresh just now \u2014 will retry shortly.';
+      return;
+    }
+    $('invalidMessage').textContent = e.message;
+    $('loadingState').classList.add('hidden');
+    $('invalidState').classList.remove('hidden');
+  }
+}
+function shiftCrewDay(n){
+  const p = state.crewDate.split('-').map(Number);
+  state.crewDate = dateKey(new Date(p[0], p[1]-1, p[2]+n, 12));
+  loadCrewList();
+}
+function downloadCrewCsv(){
+  // Exports everyone for the day (not just the current search). Cells starting with
+  // = + - @ are prefixed so a spreadsheet can't treat a typed name as a formula.
+  const esc = function(v){
+    v = String(v == null ? '' : v);
+    if (/^[=+\-@\t\r]/.test(v)) v = "'" + v;
+    return /[",\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v;
+  };
+  const lines = [['Date','Name','Type','Vehicle reg','Parking'].map(esc).join(',')];
+  state.crewPeople.forEach(function(p){
+    lines.push([state.crewDate, p.fullName, p.source === 'vip' ? 'VIP' : 'Crew', p.vehicleRequired ? p.vehicleReg : 'No vehicle', p.vehicleRequired ? parkingLabel(p.parkingType) : ''].map(esc).join(','));
+  });
+  const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = ($('crewProductionName').textContent || 'crew').replace(/[^a-z0-9]+/gi,'-') + '-crew-' + state.crewDate + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+}
+$('crewPrev').onclick = function(){ shiftCrewDay(-1); };
+$('crewNext').onclick = function(){ shiftCrewDay(1); };
+$('crewToday').onclick = function(){ state.crewDate = todayKey(); loadCrewList(); };
+$('crewDatePicker').onchange = function(){ if ($('crewDatePicker').value){ state.crewDate = $('crewDatePicker').value; loadCrewList(); } };
+$('crewSearch').oninput = renderCrewList;
+$('crewCsv').onclick = downloadCrewCsv;
+
 // ── Init ────────────────────────────────────────────────────────────────
 (function init(){
   const params = new URLSearchParams(window.location.search);
   state.token = params.get('t') || '';
   state.gatehouseToken = params.get('g') || '';
+  state.crewToken = params.get('c') || '';
+
+  if (state.crewToken) {
+    state.crewDate = todayKey();
+    loadCrewList();
+    setInterval(loadCrewList, 60000);   // live: refresh every minute
+    return;
+  }
 
   if (state.gatehouseToken) {
     loadGatehouse();
     return;
   }
 
+  loadLogo(LOGO_LW); loadLogo(LOGO_BC);   // warm the logo cache so pass images build instantly
   renderCalendar(); renderSelectedChips();
   if (!state.token) {
     $('invalidMessage').textContent = 'No access link token was found in the URL.';
