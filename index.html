@@ -73,6 +73,8 @@
     .modal-close{width:34px;height:34px;border:0;border-radius:8px;background:var(--soft);color:var(--ink);font-size:20px;line-height:1;flex-shrink:0}
     .modal-body{padding:18px 20px 22px}
     .modal-actions{display:flex;gap:10px;margin-top:14px}
+    .crew-seg{border:0;background:#fff;padding:8px 14px;font-size:13px;font-weight:700;color:var(--muted)}
+    .crew-seg.active{background:var(--accent);color:#fff}
   </style>
 </head>
 <body>
@@ -203,20 +205,40 @@
         <div class="hero">
           <div class="eyebrow"><span>Crew list</span></div>
           <h1 id="crewProductionName">—</h1>
-          <p>Live list of who has a pass for the selected day. Read-only.</p>
+          <p>Live list of who has a pass for the selected day or date range. Read-only.</p>
           <div class="roster-pill" id="crewCountPill">—</div>
         </div>
         <div class="content">
           <div class="card">
-            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+              <div role="group" aria-label="View" style="display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;">
+                <button type="button" id="crewModeDay" class="crew-seg active">Single day</button>
+                <button type="button" id="crewModeRange" class="crew-seg">Date range</button>
+              </div>
+              <button type="button" class="dl-btn" id="crewCsv" style="margin-left:auto;">Download CSV</button>
+            </div>
+            <div id="crewDayControls" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">
               <button type="button" class="dl-btn" id="crewPrev">‹ Prev</button>
               <input id="crewDatePicker" type="date" style="width:auto;min-height:38px;border:1.5px solid #cfdadd;border-radius:10px;padding:6px 10px;font-size:14px;">
               <button type="button" class="dl-btn" id="crewToday">Today</button>
               <button type="button" class="dl-btn" id="crewNext">Next ›</button>
-              <button type="button" class="dl-btn" id="crewCsv" style="margin-left:auto;">Download CSV</button>
+            </div>
+            <div id="crewRangeControls" class="hidden" style="margin-bottom:12px;">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+                <label for="crewFrom" style="margin:0;font-size:12px;">From</label>
+                <input id="crewFrom" type="date" style="width:auto;min-height:38px;border:1.5px solid #cfdadd;border-radius:10px;padding:6px 10px;font-size:14px;">
+                <label for="crewTo" style="margin:0;font-size:12px;">To</label>
+                <input id="crewTo" type="date" style="width:auto;min-height:38px;border:1.5px solid #cfdadd;border-radius:10px;padding:6px 10px;font-size:14px;">
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+                <button type="button" class="dl-btn" data-crewpreset="last7">Last 7 days</button>
+                <button type="button" class="dl-btn" data-crewpreset="week">This week</button>
+                <button type="button" class="dl-btn" data-crewpreset="next7">Next 7 days</button>
+              </div>
             </div>
             <input id="crewSearch" type="text" placeholder="Search by name or vehicle…" style="margin-bottom:12px;">
             <div id="crewTableWrap"><p class="empty">Loading…</p></div>
+            <p id="crewFutureNote" class="hint hidden" style="margin-top:10px;">Crew passes for future days appear here once they've been sent (on the morning of each day). VIP passes appear as soon as they're created.</p>
             <p id="crewUpdated" class="hint" style="margin-top:10px;"></p>
           </div>
         </div>
@@ -317,6 +339,9 @@ const state = {
   crewToken: '',
   lastEmail: '',
   crewDate: '',
+  crewMode: 'day',
+  crewFrom: '',
+  crewTo: '',
   crewPeople: [],
   production: null,
   roster: [],
@@ -903,8 +928,22 @@ async function loadGatehouse(){
   }
 }
 
-// ── Crew list: read-only live view for a production ───────────────────────
+// ── Crew list: read-only live view for a production (single day or date range) ──
+const CREW_MAX_DAYS = 31;
 function parkingLabel(t){ return t === 'onsite' ? 'Parking on site' : t === 'dropoff' ? 'Drop-off only' : ''; }
+function parseKey(k){ const p = k.split('-').map(Number); return new Date(p[0], p[1]-1, p[2], 12); }
+function addDays(k, n){ const d = parseKey(k); d.setDate(d.getDate() + n); return dateKey(d); }
+function daysBetween(a, b){ return Math.round((parseKey(b) - parseKey(a)) / 86400000); }
+function weekBounds(k){ const off = (parseKey(k).getDay() + 6) % 7; return { from: addDays(k, -off), to: addDays(k, 6 - off) }; }
+function shortDate(k){ return new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'short', year:'numeric' }).format(parseKey(k)); }
+function crewBounds(){ return state.crewMode === 'range' ? { from: state.crewFrom, to: state.crewTo } : { from: state.crewDate, to: state.crewDate }; }
+function syncCrewInputs(){ $('crewDatePicker').value = state.crewDate; $('crewFrom').value = state.crewFrom; $('crewTo').value = state.crewTo; }
+function crewNotice(msg){
+  state.crewPeople = [];
+  $('crewCountPill').textContent = '—';
+  $('crewTableWrap').innerHTML = '<p class="empty">' + escHtml(msg) + '</p>';
+  $('crewFutureNote').classList.add('hidden');
+}
 function crewFiltered(){
   const q = ($('crewSearch').value || '').trim().toLowerCase();
   return state.crewPeople.filter(function(p){
@@ -912,26 +951,38 @@ function crewFiltered(){
   });
 }
 function renderCrewList(){
+  const range = state.crewMode === 'range', b = crewBounds();
   const rows = crewFiltered();
-  $('crewCountPill').textContent = state.crewPeople.length + ' with a pass · ' + longDate(state.crewDate);
+  const people = new Set(state.crewPeople.map(function(p){ return p.fullName.toLowerCase(); })).size;
+  $('crewCountPill').textContent = range
+    ? state.crewPeople.length + ' passes · ' + people + ' ' + (people === 1 ? 'person' : 'people') + ' · ' + shortDate(b.from) + ' – ' + shortDate(b.to)
+    : state.crewPeople.length + ' with a pass · ' + longDate(state.crewDate);
+  $('crewFutureNote').classList.toggle('hidden', b.to <= todayKey());
   if (!rows.length){
-    $('crewTableWrap').innerHTML = '<p class="empty">' + (state.crewPeople.length ? 'No matches.' : 'No passes issued for this day yet.') + '</p>';
+    $('crewTableWrap').innerHTML = '<p class="empty">' + (state.crewPeople.length ? 'No matches.' : (range ? 'No passes issued in this date range yet.' : 'No passes issued for this day yet.')) + '</p>';
     return;
   }
   const body = rows.map(function(p){
     const vip = p.source === 'vip' ? '<span class="badge" style="margin-left:6px;background:#fdf0d5;color:#8a5a00;">VIP</span>' : '';
     const veh = p.vehicleRequired ? '<span class="badge badge-green">'+escHtml(p.vehicleReg)+'</span>' : '<span class="badge badge-grey">No vehicle</span>';
-    return '<tr><td><strong>'+escHtml(p.fullName)+'</strong>'+vip+'</td><td>'+veh+'</td><td>'+escHtml(p.vehicleRequired ? parkingLabel(p.parkingType) : '')+'</td></tr>';
+    return '<tr>' + (range ? '<td style="white-space:nowrap;">'+escHtml(longDate(p.date))+'</td>' : '')
+      + '<td><strong>'+escHtml(p.fullName)+'</strong>'+vip+'</td><td>'+veh+'</td><td>'+escHtml(p.vehicleRequired ? parkingLabel(p.parkingType) : '')+'</td></tr>';
   }).join('');
-  $('crewTableWrap').innerHTML = '<div style="overflow-x:auto"><table class="passes-table"><thead><tr><th>Name</th><th>Vehicle</th><th>Parking</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+  $('crewTableWrap').innerHTML = '<div style="overflow-x:auto"><table class="passes-table"><thead><tr>' + (range ? '<th>Date</th>' : '') + '<th>Name</th><th>Vehicle</th><th>Parking</th></tr></thead><tbody>'+body+'</tbody></table></div>';
 }
 async function loadCrewList(){
+  const b = crewBounds();
+  if (state.crewMode === 'range'){
+    const span = daysBetween(b.from, b.to) + 1;
+    if (!b.from || !b.to || span < 1){ crewNotice('The end date must be on or after the start date.'); return; }
+    if (span > CREW_MAX_DAYS){ crewNotice('Please choose a range of ' + CREW_MAX_DAYS + ' days or fewer.'); return; }
+  }
   try {
-    const r = await server('crewGetList', state.crewToken, state.crewDate);
+    const r = await server('crewGetList', state.crewToken, b.from, b.to);
     state.crewPeople = r.people;
     $('crewProductionName').textContent = r.production.name;
     document.documentElement.style.setProperty('--accent', r.production.colour || '#18794e');
-    $('crewDatePicker').value = state.crewDate;
+    syncCrewInputs();
     renderCrewList();
     $('crewUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + ' · refreshes automatically every minute';
     $('loadingState').classList.add('hidden');
@@ -947,13 +998,19 @@ async function loadCrewList(){
     $('invalidState').classList.remove('hidden');
   }
 }
-function shiftCrewDay(n){
-  const p = state.crewDate.split('-').map(Number);
-  state.crewDate = dateKey(new Date(p[0], p[1]-1, p[2]+n, 12));
+function setCrewMode(mode){
+  state.crewMode = mode;
+  $('crewModeDay').classList.toggle('active', mode === 'day');
+  $('crewModeRange').classList.toggle('active', mode === 'range');
+  $('crewDayControls').classList.toggle('hidden', mode !== 'day');
+  $('crewRangeControls').classList.toggle('hidden', mode !== 'range');
+  if (mode === 'range' && !state.crewFrom){ const wk = weekBounds(state.crewDate); state.crewFrom = wk.from; state.crewTo = wk.to; }
+  syncCrewInputs();
   loadCrewList();
 }
+function shiftCrewDay(n){ state.crewDate = addDays(state.crewDate, n); loadCrewList(); }
 function downloadCrewCsv(){
-  // Exports everyone for the day (not just the current search). Cells starting with
+  // Exports everyone in the current day/range (not just the current search). Cells starting with
   // = + - @ are prefixed so a spreadsheet can't treat a typed name as a formula.
   const esc = function(v){
     v = String(v == null ? '' : v);
@@ -962,19 +1019,39 @@ function downloadCrewCsv(){
   };
   const lines = [['Date','Name','Type','Vehicle reg','Parking'].map(esc).join(',')];
   state.crewPeople.forEach(function(p){
-    lines.push([state.crewDate, p.fullName, p.source === 'vip' ? 'VIP' : 'Crew', p.vehicleRequired ? p.vehicleReg : 'No vehicle', p.vehicleRequired ? parkingLabel(p.parkingType) : ''].map(esc).join(','));
+    lines.push([p.date || state.crewDate, p.fullName, p.source === 'vip' ? 'VIP' : 'Crew', p.vehicleRequired ? p.vehicleReg : 'No vehicle', p.vehicleRequired ? parkingLabel(p.parkingType) : ''].map(esc).join(','));
   });
+  const b = crewBounds();
   const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = ($('crewProductionName').textContent || 'crew').replace(/[^a-z0-9]+/gi,'-') + '-crew-' + state.crewDate + '.csv';
+  a.download = ($('crewProductionName').textContent || 'crew').replace(/[^a-z0-9]+/gi,'-') + '-crew-' + (b.from === b.to ? b.from : b.from + '_to_' + b.to) + '.csv';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
 }
+$('crewModeDay').onclick = function(){ setCrewMode('day'); };
+$('crewModeRange').onclick = function(){ setCrewMode('range'); };
 $('crewPrev').onclick = function(){ shiftCrewDay(-1); };
 $('crewNext').onclick = function(){ shiftCrewDay(1); };
 $('crewToday').onclick = function(){ state.crewDate = todayKey(); loadCrewList(); };
 $('crewDatePicker').onchange = function(){ if ($('crewDatePicker').value){ state.crewDate = $('crewDatePicker').value; loadCrewList(); } };
+$('crewFrom').onchange = function(){
+  if (!$('crewFrom').value) return;
+  state.crewFrom = $('crewFrom').value; if (state.crewTo < state.crewFrom) state.crewTo = state.crewFrom;
+  syncCrewInputs(); loadCrewList();
+};
+$('crewTo').onchange = function(){
+  if (!$('crewTo').value) return;
+  state.crewTo = $('crewTo').value; if (state.crewFrom > state.crewTo) state.crewFrom = state.crewTo;
+  syncCrewInputs(); loadCrewList();
+};
+$$('[data-crewpreset]').forEach(function(btn){ btn.onclick = function(){
+  const t = todayKey(), k = btn.dataset.crewpreset;
+  if (k === 'last7'){ state.crewFrom = addDays(t, -6); state.crewTo = t; }
+  else if (k === 'next7'){ state.crewFrom = t; state.crewTo = addDays(t, 6); }
+  else { const wk = weekBounds(t); state.crewFrom = wk.from; state.crewTo = wk.to; }
+  syncCrewInputs(); loadCrewList();
+}; });
 $('crewSearch').oninput = renderCrewList;
 $('crewCsv').onclick = downloadCrewCsv;
 
